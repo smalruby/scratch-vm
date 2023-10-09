@@ -3752,571 +3752,6 @@ function objectToString(o) {
 
 /***/ }),
 
-/***/ "./node_modules/cross-fetch/dist/browser-ponyfill.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/cross-fetch/dist/browser-ponyfill.js ***!
-  \***********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-var global = typeof self !== 'undefined' ? self : this;
-var __self__ = (function () {
-function F() {
-this.fetch = false;
-this.DOMException = global.DOMException
-}
-F.prototype = global;
-return new F();
-})();
-(function(self) {
-
-var irrelevant = (function (exports) {
-
-  var support = {
-    searchParams: 'URLSearchParams' in self,
-    iterable: 'Symbol' in self && 'iterator' in Symbol,
-    blob:
-      'FileReader' in self &&
-      'Blob' in self &&
-      (function() {
-        try {
-          new Blob();
-          return true
-        } catch (e) {
-          return false
-        }
-      })(),
-    formData: 'FormData' in self,
-    arrayBuffer: 'ArrayBuffer' in self
-  };
-
-  function isDataView(obj) {
-    return obj && DataView.prototype.isPrototypeOf(obj)
-  }
-
-  if (support.arrayBuffer) {
-    var viewClasses = [
-      '[object Int8Array]',
-      '[object Uint8Array]',
-      '[object Uint8ClampedArray]',
-      '[object Int16Array]',
-      '[object Uint16Array]',
-      '[object Int32Array]',
-      '[object Uint32Array]',
-      '[object Float32Array]',
-      '[object Float64Array]'
-    ];
-
-    var isArrayBufferView =
-      ArrayBuffer.isView ||
-      function(obj) {
-        return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
-      };
-  }
-
-  function normalizeName(name) {
-    if (typeof name !== 'string') {
-      name = String(name);
-    }
-    if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
-      throw new TypeError('Invalid character in header field name')
-    }
-    return name.toLowerCase()
-  }
-
-  function normalizeValue(value) {
-    if (typeof value !== 'string') {
-      value = String(value);
-    }
-    return value
-  }
-
-  // Build a destructive iterator for the value list
-  function iteratorFor(items) {
-    var iterator = {
-      next: function() {
-        var value = items.shift();
-        return {done: value === undefined, value: value}
-      }
-    };
-
-    if (support.iterable) {
-      iterator[Symbol.iterator] = function() {
-        return iterator
-      };
-    }
-
-    return iterator
-  }
-
-  function Headers(headers) {
-    this.map = {};
-
-    if (headers instanceof Headers) {
-      headers.forEach(function(value, name) {
-        this.append(name, value);
-      }, this);
-    } else if (Array.isArray(headers)) {
-      headers.forEach(function(header) {
-        this.append(header[0], header[1]);
-      }, this);
-    } else if (headers) {
-      Object.getOwnPropertyNames(headers).forEach(function(name) {
-        this.append(name, headers[name]);
-      }, this);
-    }
-  }
-
-  Headers.prototype.append = function(name, value) {
-    name = normalizeName(name);
-    value = normalizeValue(value);
-    var oldValue = this.map[name];
-    this.map[name] = oldValue ? oldValue + ', ' + value : value;
-  };
-
-  Headers.prototype['delete'] = function(name) {
-    delete this.map[normalizeName(name)];
-  };
-
-  Headers.prototype.get = function(name) {
-    name = normalizeName(name);
-    return this.has(name) ? this.map[name] : null
-  };
-
-  Headers.prototype.has = function(name) {
-    return this.map.hasOwnProperty(normalizeName(name))
-  };
-
-  Headers.prototype.set = function(name, value) {
-    this.map[normalizeName(name)] = normalizeValue(value);
-  };
-
-  Headers.prototype.forEach = function(callback, thisArg) {
-    for (var name in this.map) {
-      if (this.map.hasOwnProperty(name)) {
-        callback.call(thisArg, this.map[name], name, this);
-      }
-    }
-  };
-
-  Headers.prototype.keys = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push(name);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.values = function() {
-    var items = [];
-    this.forEach(function(value) {
-      items.push(value);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.entries = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push([name, value]);
-    });
-    return iteratorFor(items)
-  };
-
-  if (support.iterable) {
-    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;
-  }
-
-  function consumed(body) {
-    if (body.bodyUsed) {
-      return Promise.reject(new TypeError('Already read'))
-    }
-    body.bodyUsed = true;
-  }
-
-  function fileReaderReady(reader) {
-    return new Promise(function(resolve, reject) {
-      reader.onload = function() {
-        resolve(reader.result);
-      };
-      reader.onerror = function() {
-        reject(reader.error);
-      };
-    })
-  }
-
-  function readBlobAsArrayBuffer(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsArrayBuffer(blob);
-    return promise
-  }
-
-  function readBlobAsText(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsText(blob);
-    return promise
-  }
-
-  function readArrayBufferAsText(buf) {
-    var view = new Uint8Array(buf);
-    var chars = new Array(view.length);
-
-    for (var i = 0; i < view.length; i++) {
-      chars[i] = String.fromCharCode(view[i]);
-    }
-    return chars.join('')
-  }
-
-  function bufferClone(buf) {
-    if (buf.slice) {
-      return buf.slice(0)
-    } else {
-      var view = new Uint8Array(buf.byteLength);
-      view.set(new Uint8Array(buf));
-      return view.buffer
-    }
-  }
-
-  function Body() {
-    this.bodyUsed = false;
-
-    this._initBody = function(body) {
-      this._bodyInit = body;
-      if (!body) {
-        this._bodyText = '';
-      } else if (typeof body === 'string') {
-        this._bodyText = body;
-      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-        this._bodyBlob = body;
-      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-        this._bodyFormData = body;
-      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-        this._bodyText = body.toString();
-      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
-        this._bodyArrayBuffer = bufferClone(body.buffer);
-        // IE 10-11 can't handle a DataView body.
-        this._bodyInit = new Blob([this._bodyArrayBuffer]);
-      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
-        this._bodyArrayBuffer = bufferClone(body);
-      } else {
-        this._bodyText = body = Object.prototype.toString.call(body);
-      }
-
-      if (!this.headers.get('content-type')) {
-        if (typeof body === 'string') {
-          this.headers.set('content-type', 'text/plain;charset=UTF-8');
-        } else if (this._bodyBlob && this._bodyBlob.type) {
-          this.headers.set('content-type', this._bodyBlob.type);
-        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-        }
-      }
-    };
-
-    if (support.blob) {
-      this.blob = function() {
-        var rejected = consumed(this);
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return Promise.resolve(this._bodyBlob)
-        } else if (this._bodyArrayBuffer) {
-          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as blob')
-        } else {
-          return Promise.resolve(new Blob([this._bodyText]))
-        }
-      };
-
-      this.arrayBuffer = function() {
-        if (this._bodyArrayBuffer) {
-          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
-        } else {
-          return this.blob().then(readBlobAsArrayBuffer)
-        }
-      };
-    }
-
-    this.text = function() {
-      var rejected = consumed(this);
-      if (rejected) {
-        return rejected
-      }
-
-      if (this._bodyBlob) {
-        return readBlobAsText(this._bodyBlob)
-      } else if (this._bodyArrayBuffer) {
-        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
-      } else if (this._bodyFormData) {
-        throw new Error('could not read FormData body as text')
-      } else {
-        return Promise.resolve(this._bodyText)
-      }
-    };
-
-    if (support.formData) {
-      this.formData = function() {
-        return this.text().then(decode)
-      };
-    }
-
-    this.json = function() {
-      return this.text().then(JSON.parse)
-    };
-
-    return this
-  }
-
-  // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];
-
-  function normalizeMethod(method) {
-    var upcased = method.toUpperCase();
-    return methods.indexOf(upcased) > -1 ? upcased : method
-  }
-
-  function Request(input, options) {
-    options = options || {};
-    var body = options.body;
-
-    if (input instanceof Request) {
-      if (input.bodyUsed) {
-        throw new TypeError('Already read')
-      }
-      this.url = input.url;
-      this.credentials = input.credentials;
-      if (!options.headers) {
-        this.headers = new Headers(input.headers);
-      }
-      this.method = input.method;
-      this.mode = input.mode;
-      this.signal = input.signal;
-      if (!body && input._bodyInit != null) {
-        body = input._bodyInit;
-        input.bodyUsed = true;
-      }
-    } else {
-      this.url = String(input);
-    }
-
-    this.credentials = options.credentials || this.credentials || 'same-origin';
-    if (options.headers || !this.headers) {
-      this.headers = new Headers(options.headers);
-    }
-    this.method = normalizeMethod(options.method || this.method || 'GET');
-    this.mode = options.mode || this.mode || null;
-    this.signal = options.signal || this.signal;
-    this.referrer = null;
-
-    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
-      throw new TypeError('Body not allowed for GET or HEAD requests')
-    }
-    this._initBody(body);
-  }
-
-  Request.prototype.clone = function() {
-    return new Request(this, {body: this._bodyInit})
-  };
-
-  function decode(body) {
-    var form = new FormData();
-    body
-      .trim()
-      .split('&')
-      .forEach(function(bytes) {
-        if (bytes) {
-          var split = bytes.split('=');
-          var name = split.shift().replace(/\+/g, ' ');
-          var value = split.join('=').replace(/\+/g, ' ');
-          form.append(decodeURIComponent(name), decodeURIComponent(value));
-        }
-      });
-    return form
-  }
-
-  function parseHeaders(rawHeaders) {
-    var headers = new Headers();
-    // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
-    // https://tools.ietf.org/html/rfc7230#section-3.2
-    var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
-    preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
-      var parts = line.split(':');
-      var key = parts.shift().trim();
-      if (key) {
-        var value = parts.join(':').trim();
-        headers.append(key, value);
-      }
-    });
-    return headers
-  }
-
-  Body.call(Request.prototype);
-
-  function Response(bodyInit, options) {
-    if (!options) {
-      options = {};
-    }
-
-    this.type = 'default';
-    this.status = options.status === undefined ? 200 : options.status;
-    this.ok = this.status >= 200 && this.status < 300;
-    this.statusText = 'statusText' in options ? options.statusText : 'OK';
-    this.headers = new Headers(options.headers);
-    this.url = options.url || '';
-    this._initBody(bodyInit);
-  }
-
-  Body.call(Response.prototype);
-
-  Response.prototype.clone = function() {
-    return new Response(this._bodyInit, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: new Headers(this.headers),
-      url: this.url
-    })
-  };
-
-  Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''});
-    response.type = 'error';
-    return response
-  };
-
-  var redirectStatuses = [301, 302, 303, 307, 308];
-
-  Response.redirect = function(url, status) {
-    if (redirectStatuses.indexOf(status) === -1) {
-      throw new RangeError('Invalid status code')
-    }
-
-    return new Response(null, {status: status, headers: {location: url}})
-  };
-
-  exports.DOMException = self.DOMException;
-  try {
-    new exports.DOMException();
-  } catch (err) {
-    exports.DOMException = function(message, name) {
-      this.message = message;
-      this.name = name;
-      var error = Error(message);
-      this.stack = error.stack;
-    };
-    exports.DOMException.prototype = Object.create(Error.prototype);
-    exports.DOMException.prototype.constructor = exports.DOMException;
-  }
-
-  function fetch(input, init) {
-    return new Promise(function(resolve, reject) {
-      var request = new Request(input, init);
-
-      if (request.signal && request.signal.aborted) {
-        return reject(new exports.DOMException('Aborted', 'AbortError'))
-      }
-
-      var xhr = new XMLHttpRequest();
-
-      function abortXhr() {
-        xhr.abort();
-      }
-
-      xhr.onload = function() {
-        var options = {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
-        };
-        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
-        var body = 'response' in xhr ? xhr.response : xhr.responseText;
-        resolve(new Response(body, options));
-      };
-
-      xhr.onerror = function() {
-        reject(new TypeError('Network request failed'));
-      };
-
-      xhr.ontimeout = function() {
-        reject(new TypeError('Network request failed'));
-      };
-
-      xhr.onabort = function() {
-        reject(new exports.DOMException('Aborted', 'AbortError'));
-      };
-
-      xhr.open(request.method, request.url, true);
-
-      if (request.credentials === 'include') {
-        xhr.withCredentials = true;
-      } else if (request.credentials === 'omit') {
-        xhr.withCredentials = false;
-      }
-
-      if ('responseType' in xhr && support.blob) {
-        xhr.responseType = 'blob';
-      }
-
-      request.headers.forEach(function(value, name) {
-        xhr.setRequestHeader(name, value);
-      });
-
-      if (request.signal) {
-        request.signal.addEventListener('abort', abortXhr);
-
-        xhr.onreadystatechange = function() {
-          // DONE (success or failure)
-          if (xhr.readyState === 4) {
-            request.signal.removeEventListener('abort', abortXhr);
-          }
-        };
-      }
-
-      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
-    })
-  }
-
-  fetch.polyfill = true;
-
-  if (!self.fetch) {
-    self.fetch = fetch;
-    self.Headers = Headers;
-    self.Request = Request;
-    self.Response = Response;
-  }
-
-  exports.Headers = Headers;
-  exports.Request = Request;
-  exports.Response = Response;
-  exports.fetch = fetch;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
-
-  return exports;
-
-})({});
-})(__self__);
-__self__.fetch.ponyfill = true;
-// Remove "polyfill" property added by whatwg-fetch
-delete __self__.fetch.polyfill;
-// Choose between native implementation (global) or custom implementation (__self__)
-// var ctx = global.fetch ? global : __self__;
-var ctx = __self__; // this line disable service worker support temporarily
-exports = ctx.fetch // To enable: import fetch from 'cross-fetch'
-exports.default = ctx.fetch // For TypeScript consumers without esModuleInterop.
-exports.fetch = ctx.fetch // To enable: import {fetch} from 'cross-fetch'
-exports.Headers = ctx.Headers
-exports.Request = ctx.Request
-exports.Response = ctx.Response
-module.exports = exports
-
-
-/***/ }),
-
 /***/ "./node_modules/css-tree/data/index.js":
 /*!*********************************************!*\
   !*** ./node_modules/css-tree/data/index.js ***!
@@ -66564,7 +65999,7 @@ assert.validate = function (test, message) {
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function() {
-  return __webpack_require__(/*! !./node_modules/scratch-storage/node_modules/worker-loader/dist/workers/InlineWorker.js */ "./node_modules/scratch-storage/node_modules/worker-loader/dist/workers/InlineWorker.js")("/******/ (function(modules) { // webpackBootstrap\n/******/ \t// The module cache\n/******/ \tvar installedModules = {};\n/******/\n/******/ \t// The require function\n/******/ \tfunction __webpack_require__(moduleId) {\n/******/\n/******/ \t\t// Check if module is in cache\n/******/ \t\tif(installedModules[moduleId]) {\n/******/ \t\t\treturn installedModules[moduleId].exports;\n/******/ \t\t}\n/******/ \t\t// Create a new module (and put it into the cache)\n/******/ \t\tvar module = installedModules[moduleId] = {\n/******/ \t\t\ti: moduleId,\n/******/ \t\t\tl: false,\n/******/ \t\t\texports: {}\n/******/ \t\t};\n/******/\n/******/ \t\t// Execute the module function\n/******/ \t\tmodules[moduleId].call(module.exports, module, module.exports, __webpack_require__);\n/******/\n/******/ \t\t// Flag the module as loaded\n/******/ \t\tmodule.l = true;\n/******/\n/******/ \t\t// Return the exports of the module\n/******/ \t\treturn module.exports;\n/******/ \t}\n/******/\n/******/\n/******/ \t// expose the modules object (__webpack_modules__)\n/******/ \t__webpack_require__.m = modules;\n/******/\n/******/ \t// expose the module cache\n/******/ \t__webpack_require__.c = installedModules;\n/******/\n/******/ \t// define getter function for harmony exports\n/******/ \t__webpack_require__.d = function(exports, name, getter) {\n/******/ \t\tif(!__webpack_require__.o(exports, name)) {\n/******/ \t\t\tObject.defineProperty(exports, name, { enumerable: true, get: getter });\n/******/ \t\t}\n/******/ \t};\n/******/\n/******/ \t// define __esModule on exports\n/******/ \t__webpack_require__.r = function(exports) {\n/******/ \t\tif(typeof Symbol !== 'undefined' && Symbol.toStringTag) {\n/******/ \t\t\tObject.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });\n/******/ \t\t}\n/******/ \t\tObject.defineProperty(exports, '__esModule', { value: true });\n/******/ \t};\n/******/\n/******/ \t// create a fake namespace object\n/******/ \t// mode & 1: value is a module id, require it\n/******/ \t// mode & 2: merge all properties of value into the ns\n/******/ \t// mode & 4: return value when already ns object\n/******/ \t// mode & 8|1: behave like require\n/******/ \t__webpack_require__.t = function(value, mode) {\n/******/ \t\tif(mode & 1) value = __webpack_require__(value);\n/******/ \t\tif(mode & 8) return value;\n/******/ \t\tif((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;\n/******/ \t\tvar ns = Object.create(null);\n/******/ \t\t__webpack_require__.r(ns);\n/******/ \t\tObject.defineProperty(ns, 'default', { enumerable: true, value: value });\n/******/ \t\tif(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));\n/******/ \t\treturn ns;\n/******/ \t};\n/******/\n/******/ \t// getDefaultExport function for compatibility with non-harmony modules\n/******/ \t__webpack_require__.n = function(module) {\n/******/ \t\tvar getter = module && module.__esModule ?\n/******/ \t\t\tfunction getDefault() { return module['default']; } :\n/******/ \t\t\tfunction getModuleExports() { return module; };\n/******/ \t\t__webpack_require__.d(getter, 'a', getter);\n/******/ \t\treturn getter;\n/******/ \t};\n/******/\n/******/ \t// Object.prototype.hasOwnProperty.call\n/******/ \t__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };\n/******/\n/******/ \t// __webpack_public_path__\n/******/ \t__webpack_require__.p = \"\";\n/******/\n/******/\n/******/ \t// Load entry module and return exports\n/******/ \treturn __webpack_require__(__webpack_require__.s = \"./node_modules/scratch-storage/src/FetchWorkerTool.worker.js\");\n/******/ })\n/************************************************************************/\n/******/ ({\n\n/***/ \"./node_modules/cross-fetch/dist/browser-ponyfill.js\":\n/*!***********************************************************!*\\\n  !*** ./node_modules/cross-fetch/dist/browser-ponyfill.js ***!\n  \\***********************************************************/\n/*! no static exports found */\n/***/ (function(module, exports) {\n\nvar global = typeof self !== 'undefined' ? self : this;\nvar __self__ = (function () {\nfunction F() {\nthis.fetch = false;\nthis.DOMException = global.DOMException\n}\nF.prototype = global;\nreturn new F();\n})();\n(function(self) {\n\nvar irrelevant = (function (exports) {\n\n  var support = {\n    searchParams: 'URLSearchParams' in self,\n    iterable: 'Symbol' in self && 'iterator' in Symbol,\n    blob:\n      'FileReader' in self &&\n      'Blob' in self &&\n      (function() {\n        try {\n          new Blob();\n          return true\n        } catch (e) {\n          return false\n        }\n      })(),\n    formData: 'FormData' in self,\n    arrayBuffer: 'ArrayBuffer' in self\n  };\n\n  function isDataView(obj) {\n    return obj && DataView.prototype.isPrototypeOf(obj)\n  }\n\n  if (support.arrayBuffer) {\n    var viewClasses = [\n      '[object Int8Array]',\n      '[object Uint8Array]',\n      '[object Uint8ClampedArray]',\n      '[object Int16Array]',\n      '[object Uint16Array]',\n      '[object Int32Array]',\n      '[object Uint32Array]',\n      '[object Float32Array]',\n      '[object Float64Array]'\n    ];\n\n    var isArrayBufferView =\n      ArrayBuffer.isView ||\n      function(obj) {\n        return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1\n      };\n  }\n\n  function normalizeName(name) {\n    if (typeof name !== 'string') {\n      name = String(name);\n    }\n    if (/[^a-z0-9\\-#$%&'*+.^_`|~]/i.test(name)) {\n      throw new TypeError('Invalid character in header field name')\n    }\n    return name.toLowerCase()\n  }\n\n  function normalizeValue(value) {\n    if (typeof value !== 'string') {\n      value = String(value);\n    }\n    return value\n  }\n\n  // Build a destructive iterator for the value list\n  function iteratorFor(items) {\n    var iterator = {\n      next: function() {\n        var value = items.shift();\n        return {done: value === undefined, value: value}\n      }\n    };\n\n    if (support.iterable) {\n      iterator[Symbol.iterator] = function() {\n        return iterator\n      };\n    }\n\n    return iterator\n  }\n\n  function Headers(headers) {\n    this.map = {};\n\n    if (headers instanceof Headers) {\n      headers.forEach(function(value, name) {\n        this.append(name, value);\n      }, this);\n    } else if (Array.isArray(headers)) {\n      headers.forEach(function(header) {\n        this.append(header[0], header[1]);\n      }, this);\n    } else if (headers) {\n      Object.getOwnPropertyNames(headers).forEach(function(name) {\n        this.append(name, headers[name]);\n      }, this);\n    }\n  }\n\n  Headers.prototype.append = function(name, value) {\n    name = normalizeName(name);\n    value = normalizeValue(value);\n    var oldValue = this.map[name];\n    this.map[name] = oldValue ? oldValue + ', ' + value : value;\n  };\n\n  Headers.prototype['delete'] = function(name) {\n    delete this.map[normalizeName(name)];\n  };\n\n  Headers.prototype.get = function(name) {\n    name = normalizeName(name);\n    return this.has(name) ? this.map[name] : null\n  };\n\n  Headers.prototype.has = function(name) {\n    return this.map.hasOwnProperty(normalizeName(name))\n  };\n\n  Headers.prototype.set = function(name, value) {\n    this.map[normalizeName(name)] = normalizeValue(value);\n  };\n\n  Headers.prototype.forEach = function(callback, thisArg) {\n    for (var name in this.map) {\n      if (this.map.hasOwnProperty(name)) {\n        callback.call(thisArg, this.map[name], name, this);\n      }\n    }\n  };\n\n  Headers.prototype.keys = function() {\n    var items = [];\n    this.forEach(function(value, name) {\n      items.push(name);\n    });\n    return iteratorFor(items)\n  };\n\n  Headers.prototype.values = function() {\n    var items = [];\n    this.forEach(function(value) {\n      items.push(value);\n    });\n    return iteratorFor(items)\n  };\n\n  Headers.prototype.entries = function() {\n    var items = [];\n    this.forEach(function(value, name) {\n      items.push([name, value]);\n    });\n    return iteratorFor(items)\n  };\n\n  if (support.iterable) {\n    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;\n  }\n\n  function consumed(body) {\n    if (body.bodyUsed) {\n      return Promise.reject(new TypeError('Already read'))\n    }\n    body.bodyUsed = true;\n  }\n\n  function fileReaderReady(reader) {\n    return new Promise(function(resolve, reject) {\n      reader.onload = function() {\n        resolve(reader.result);\n      };\n      reader.onerror = function() {\n        reject(reader.error);\n      };\n    })\n  }\n\n  function readBlobAsArrayBuffer(blob) {\n    var reader = new FileReader();\n    var promise = fileReaderReady(reader);\n    reader.readAsArrayBuffer(blob);\n    return promise\n  }\n\n  function readBlobAsText(blob) {\n    var reader = new FileReader();\n    var promise = fileReaderReady(reader);\n    reader.readAsText(blob);\n    return promise\n  }\n\n  function readArrayBufferAsText(buf) {\n    var view = new Uint8Array(buf);\n    var chars = new Array(view.length);\n\n    for (var i = 0; i < view.length; i++) {\n      chars[i] = String.fromCharCode(view[i]);\n    }\n    return chars.join('')\n  }\n\n  function bufferClone(buf) {\n    if (buf.slice) {\n      return buf.slice(0)\n    } else {\n      var view = new Uint8Array(buf.byteLength);\n      view.set(new Uint8Array(buf));\n      return view.buffer\n    }\n  }\n\n  function Body() {\n    this.bodyUsed = false;\n\n    this._initBody = function(body) {\n      this._bodyInit = body;\n      if (!body) {\n        this._bodyText = '';\n      } else if (typeof body === 'string') {\n        this._bodyText = body;\n      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {\n        this._bodyBlob = body;\n      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {\n        this._bodyFormData = body;\n      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {\n        this._bodyText = body.toString();\n      } else if (support.arrayBuffer && support.blob && isDataView(body)) {\n        this._bodyArrayBuffer = bufferClone(body.buffer);\n        // IE 10-11 can't handle a DataView body.\n        this._bodyInit = new Blob([this._bodyArrayBuffer]);\n      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {\n        this._bodyArrayBuffer = bufferClone(body);\n      } else {\n        this._bodyText = body = Object.prototype.toString.call(body);\n      }\n\n      if (!this.headers.get('content-type')) {\n        if (typeof body === 'string') {\n          this.headers.set('content-type', 'text/plain;charset=UTF-8');\n        } else if (this._bodyBlob && this._bodyBlob.type) {\n          this.headers.set('content-type', this._bodyBlob.type);\n        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {\n          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');\n        }\n      }\n    };\n\n    if (support.blob) {\n      this.blob = function() {\n        var rejected = consumed(this);\n        if (rejected) {\n          return rejected\n        }\n\n        if (this._bodyBlob) {\n          return Promise.resolve(this._bodyBlob)\n        } else if (this._bodyArrayBuffer) {\n          return Promise.resolve(new Blob([this._bodyArrayBuffer]))\n        } else if (this._bodyFormData) {\n          throw new Error('could not read FormData body as blob')\n        } else {\n          return Promise.resolve(new Blob([this._bodyText]))\n        }\n      };\n\n      this.arrayBuffer = function() {\n        if (this._bodyArrayBuffer) {\n          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)\n        } else {\n          return this.blob().then(readBlobAsArrayBuffer)\n        }\n      };\n    }\n\n    this.text = function() {\n      var rejected = consumed(this);\n      if (rejected) {\n        return rejected\n      }\n\n      if (this._bodyBlob) {\n        return readBlobAsText(this._bodyBlob)\n      } else if (this._bodyArrayBuffer) {\n        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))\n      } else if (this._bodyFormData) {\n        throw new Error('could not read FormData body as text')\n      } else {\n        return Promise.resolve(this._bodyText)\n      }\n    };\n\n    if (support.formData) {\n      this.formData = function() {\n        return this.text().then(decode)\n      };\n    }\n\n    this.json = function() {\n      return this.text().then(JSON.parse)\n    };\n\n    return this\n  }\n\n  // HTTP methods whose capitalization should be normalized\n  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];\n\n  function normalizeMethod(method) {\n    var upcased = method.toUpperCase();\n    return methods.indexOf(upcased) > -1 ? upcased : method\n  }\n\n  function Request(input, options) {\n    options = options || {};\n    var body = options.body;\n\n    if (input instanceof Request) {\n      if (input.bodyUsed) {\n        throw new TypeError('Already read')\n      }\n      this.url = input.url;\n      this.credentials = input.credentials;\n      if (!options.headers) {\n        this.headers = new Headers(input.headers);\n      }\n      this.method = input.method;\n      this.mode = input.mode;\n      this.signal = input.signal;\n      if (!body && input._bodyInit != null) {\n        body = input._bodyInit;\n        input.bodyUsed = true;\n      }\n    } else {\n      this.url = String(input);\n    }\n\n    this.credentials = options.credentials || this.credentials || 'same-origin';\n    if (options.headers || !this.headers) {\n      this.headers = new Headers(options.headers);\n    }\n    this.method = normalizeMethod(options.method || this.method || 'GET');\n    this.mode = options.mode || this.mode || null;\n    this.signal = options.signal || this.signal;\n    this.referrer = null;\n\n    if ((this.method === 'GET' || this.method === 'HEAD') && body) {\n      throw new TypeError('Body not allowed for GET or HEAD requests')\n    }\n    this._initBody(body);\n  }\n\n  Request.prototype.clone = function() {\n    return new Request(this, {body: this._bodyInit})\n  };\n\n  function decode(body) {\n    var form = new FormData();\n    body\n      .trim()\n      .split('&')\n      .forEach(function(bytes) {\n        if (bytes) {\n          var split = bytes.split('=');\n          var name = split.shift().replace(/\\+/g, ' ');\n          var value = split.join('=').replace(/\\+/g, ' ');\n          form.append(decodeURIComponent(name), decodeURIComponent(value));\n        }\n      });\n    return form\n  }\n\n  function parseHeaders(rawHeaders) {\n    var headers = new Headers();\n    // Replace instances of \\r\\n and \\n followed by at least one space or horizontal tab with a space\n    // https://tools.ietf.org/html/rfc7230#section-3.2\n    var preProcessedHeaders = rawHeaders.replace(/\\r?\\n[\\t ]+/g, ' ');\n    preProcessedHeaders.split(/\\r?\\n/).forEach(function(line) {\n      var parts = line.split(':');\n      var key = parts.shift().trim();\n      if (key) {\n        var value = parts.join(':').trim();\n        headers.append(key, value);\n      }\n    });\n    return headers\n  }\n\n  Body.call(Request.prototype);\n\n  function Response(bodyInit, options) {\n    if (!options) {\n      options = {};\n    }\n\n    this.type = 'default';\n    this.status = options.status === undefined ? 200 : options.status;\n    this.ok = this.status >= 200 && this.status < 300;\n    this.statusText = 'statusText' in options ? options.statusText : 'OK';\n    this.headers = new Headers(options.headers);\n    this.url = options.url || '';\n    this._initBody(bodyInit);\n  }\n\n  Body.call(Response.prototype);\n\n  Response.prototype.clone = function() {\n    return new Response(this._bodyInit, {\n      status: this.status,\n      statusText: this.statusText,\n      headers: new Headers(this.headers),\n      url: this.url\n    })\n  };\n\n  Response.error = function() {\n    var response = new Response(null, {status: 0, statusText: ''});\n    response.type = 'error';\n    return response\n  };\n\n  var redirectStatuses = [301, 302, 303, 307, 308];\n\n  Response.redirect = function(url, status) {\n    if (redirectStatuses.indexOf(status) === -1) {\n      throw new RangeError('Invalid status code')\n    }\n\n    return new Response(null, {status: status, headers: {location: url}})\n  };\n\n  exports.DOMException = self.DOMException;\n  try {\n    new exports.DOMException();\n  } catch (err) {\n    exports.DOMException = function(message, name) {\n      this.message = message;\n      this.name = name;\n      var error = Error(message);\n      this.stack = error.stack;\n    };\n    exports.DOMException.prototype = Object.create(Error.prototype);\n    exports.DOMException.prototype.constructor = exports.DOMException;\n  }\n\n  function fetch(input, init) {\n    return new Promise(function(resolve, reject) {\n      var request = new Request(input, init);\n\n      if (request.signal && request.signal.aborted) {\n        return reject(new exports.DOMException('Aborted', 'AbortError'))\n      }\n\n      var xhr = new XMLHttpRequest();\n\n      function abortXhr() {\n        xhr.abort();\n      }\n\n      xhr.onload = function() {\n        var options = {\n          status: xhr.status,\n          statusText: xhr.statusText,\n          headers: parseHeaders(xhr.getAllResponseHeaders() || '')\n        };\n        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');\n        var body = 'response' in xhr ? xhr.response : xhr.responseText;\n        resolve(new Response(body, options));\n      };\n\n      xhr.onerror = function() {\n        reject(new TypeError('Network request failed'));\n      };\n\n      xhr.ontimeout = function() {\n        reject(new TypeError('Network request failed'));\n      };\n\n      xhr.onabort = function() {\n        reject(new exports.DOMException('Aborted', 'AbortError'));\n      };\n\n      xhr.open(request.method, request.url, true);\n\n      if (request.credentials === 'include') {\n        xhr.withCredentials = true;\n      } else if (request.credentials === 'omit') {\n        xhr.withCredentials = false;\n      }\n\n      if ('responseType' in xhr && support.blob) {\n        xhr.responseType = 'blob';\n      }\n\n      request.headers.forEach(function(value, name) {\n        xhr.setRequestHeader(name, value);\n      });\n\n      if (request.signal) {\n        request.signal.addEventListener('abort', abortXhr);\n\n        xhr.onreadystatechange = function() {\n          // DONE (success or failure)\n          if (xhr.readyState === 4) {\n            request.signal.removeEventListener('abort', abortXhr);\n          }\n        };\n      }\n\n      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);\n    })\n  }\n\n  fetch.polyfill = true;\n\n  if (!self.fetch) {\n    self.fetch = fetch;\n    self.Headers = Headers;\n    self.Request = Request;\n    self.Response = Response;\n  }\n\n  exports.Headers = Headers;\n  exports.Request = Request;\n  exports.Response = Response;\n  exports.fetch = fetch;\n\n  Object.defineProperty(exports, '__esModule', { value: true });\n\n  return exports;\n\n})({});\n})(__self__);\n__self__.fetch.ponyfill = true;\n// Remove \"polyfill\" property added by whatwg-fetch\ndelete __self__.fetch.polyfill;\n// Choose between native implementation (global) or custom implementation (__self__)\n// var ctx = global.fetch ? global : __self__;\nvar ctx = __self__; // this line disable service worker support temporarily\nexports = ctx.fetch // To enable: import fetch from 'cross-fetch'\nexports.default = ctx.fetch // For TypeScript consumers without esModuleInterop.\nexports.fetch = ctx.fetch // To enable: import {fetch} from 'cross-fetch'\nexports.Headers = ctx.Headers\nexports.Request = ctx.Request\nexports.Response = ctx.Response\nmodule.exports = exports\n\n\n/***/ }),\n\n/***/ \"./node_modules/scratch-storage/src/FetchWorkerTool.worker.js\":\n/*!********************************************************************!*\\\n  !*** ./node_modules/scratch-storage/src/FetchWorkerTool.worker.js ***!\n  \\********************************************************************/\n/*! no static exports found */\n/***/ (function(module, exports, __webpack_require__) {\n\n/* eslint-env worker */\n\nconst crossFetch = __webpack_require__(/*! cross-fetch */ \"./node_modules/cross-fetch/dist/browser-ponyfill.js\").default;\n\nlet jobsActive = 0;\nconst complete = [];\n\nlet intervalId = null;\n\n/**\n * Register a step function.\n *\n * Step checks if there are completed jobs and if there are sends them to the\n * parent. Then it checks the jobs count. If there are no further jobs, clear\n * the step.\n */\nconst registerStep = function () {\n    intervalId = setInterval(() => {\n        if (complete.length) {\n            // Send our chunk of completed requests and instruct postMessage to\n            // transfer the buffers instead of copying them.\n            postMessage(\n                complete.slice(),\n                // Instruct postMessage that these buffers in the sent message\n                // should use their Transferable trait. After the postMessage\n                // call the \"buffers\" will still be in complete if you looked,\n                // but they will all be length 0 as the data they reference has\n                // been sent to the window. This lets us send a lot of data\n                // without the normal postMessage behaviour of making a copy of\n                // all of the data for the window.\n                complete.map(response => response.buffer).filter(Boolean)\n            );\n            complete.length = 0;\n        }\n        if (jobsActive === 0) {\n            clearInterval(intervalId);\n            intervalId = null;\n        }\n    }, 1);\n};\n\n/**\n * Receive a job from the parent and fetch the requested data.\n * @param {object} options.job A job id, url, and options descriptor to perform.\n */\nconst onMessage = ({data: job}) => {\n    if (jobsActive === 0 && !intervalId) {\n        registerStep();\n    }\n\n    jobsActive++;\n\n    crossFetch(job.url, job.options)\n        .then(result => {\n            if (result.ok) return result.arrayBuffer();\n            if (result.status === 404) return null;\n            return Promise.reject(result.status);\n        })\n        .then(buffer => complete.push({id: job.id, buffer}))\n        .catch(error => complete.push({id: job.id, error: (error && error.message) || `Failed request: ${job.url}`}))\n        .then(() => jobsActive--);\n};\n\n// crossFetch means \"fetch\" is now always supported\npostMessage({support: {fetch: true}});\nself.addEventListener('message', onMessage);\n\n\n/***/ })\n\n/******/ });\n//# sourceMappingURL=706094244d1ff1392984.worker.js.map", __webpack_require__.p + "706094244d1ff1392984.worker.js");
+  return __webpack_require__(/*! !./node_modules/scratch-storage/node_modules/worker-loader/dist/workers/InlineWorker.js */ "./node_modules/scratch-storage/node_modules/worker-loader/dist/workers/InlineWorker.js")("/******/ (function(modules) { // webpackBootstrap\n/******/ \t// The module cache\n/******/ \tvar installedModules = {};\n/******/\n/******/ \t// The require function\n/******/ \tfunction __webpack_require__(moduleId) {\n/******/\n/******/ \t\t// Check if module is in cache\n/******/ \t\tif(installedModules[moduleId]) {\n/******/ \t\t\treturn installedModules[moduleId].exports;\n/******/ \t\t}\n/******/ \t\t// Create a new module (and put it into the cache)\n/******/ \t\tvar module = installedModules[moduleId] = {\n/******/ \t\t\ti: moduleId,\n/******/ \t\t\tl: false,\n/******/ \t\t\texports: {}\n/******/ \t\t};\n/******/\n/******/ \t\t// Execute the module function\n/******/ \t\tmodules[moduleId].call(module.exports, module, module.exports, __webpack_require__);\n/******/\n/******/ \t\t// Flag the module as loaded\n/******/ \t\tmodule.l = true;\n/******/\n/******/ \t\t// Return the exports of the module\n/******/ \t\treturn module.exports;\n/******/ \t}\n/******/\n/******/\n/******/ \t// expose the modules object (__webpack_modules__)\n/******/ \t__webpack_require__.m = modules;\n/******/\n/******/ \t// expose the module cache\n/******/ \t__webpack_require__.c = installedModules;\n/******/\n/******/ \t// define getter function for harmony exports\n/******/ \t__webpack_require__.d = function(exports, name, getter) {\n/******/ \t\tif(!__webpack_require__.o(exports, name)) {\n/******/ \t\t\tObject.defineProperty(exports, name, { enumerable: true, get: getter });\n/******/ \t\t}\n/******/ \t};\n/******/\n/******/ \t// define __esModule on exports\n/******/ \t__webpack_require__.r = function(exports) {\n/******/ \t\tif(typeof Symbol !== 'undefined' && Symbol.toStringTag) {\n/******/ \t\t\tObject.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });\n/******/ \t\t}\n/******/ \t\tObject.defineProperty(exports, '__esModule', { value: true });\n/******/ \t};\n/******/\n/******/ \t// create a fake namespace object\n/******/ \t// mode & 1: value is a module id, require it\n/******/ \t// mode & 2: merge all properties of value into the ns\n/******/ \t// mode & 4: return value when already ns object\n/******/ \t// mode & 8|1: behave like require\n/******/ \t__webpack_require__.t = function(value, mode) {\n/******/ \t\tif(mode & 1) value = __webpack_require__(value);\n/******/ \t\tif(mode & 8) return value;\n/******/ \t\tif((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;\n/******/ \t\tvar ns = Object.create(null);\n/******/ \t\t__webpack_require__.r(ns);\n/******/ \t\tObject.defineProperty(ns, 'default', { enumerable: true, value: value });\n/******/ \t\tif(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));\n/******/ \t\treturn ns;\n/******/ \t};\n/******/\n/******/ \t// getDefaultExport function for compatibility with non-harmony modules\n/******/ \t__webpack_require__.n = function(module) {\n/******/ \t\tvar getter = module && module.__esModule ?\n/******/ \t\t\tfunction getDefault() { return module['default']; } :\n/******/ \t\t\tfunction getModuleExports() { return module; };\n/******/ \t\t__webpack_require__.d(getter, 'a', getter);\n/******/ \t\treturn getter;\n/******/ \t};\n/******/\n/******/ \t// Object.prototype.hasOwnProperty.call\n/******/ \t__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };\n/******/\n/******/ \t// __webpack_public_path__\n/******/ \t__webpack_require__.p = \"\";\n/******/\n/******/\n/******/ \t// Load entry module and return exports\n/******/ \treturn __webpack_require__(__webpack_require__.s = \"./node_modules/scratch-storage/src/FetchWorkerTool.worker.js\");\n/******/ })\n/************************************************************************/\n/******/ ({\n\n/***/ \"./node_modules/scratch-storage/src/FetchWorkerTool.worker.js\":\n/*!********************************************************************!*\\\n  !*** ./node_modules/scratch-storage/src/FetchWorkerTool.worker.js ***!\n  \\********************************************************************/\n/*! no static exports found */\n/***/ (function(module, exports) {\n\n/* eslint-env worker */\n\nlet jobsActive = 0;\nconst complete = [];\n\nlet intervalId = null;\n\n/**\n * Register a step function.\n *\n * Step checks if there are completed jobs and if there are sends them to the\n * parent. Then it checks the jobs count. If there are no further jobs, clear\n * the step.\n */\nconst registerStep = function () {\n    intervalId = setInterval(() => {\n        if (complete.length) {\n            // Send our chunk of completed requests and instruct postMessage to\n            // transfer the buffers instead of copying them.\n            postMessage(\n                complete.slice(),\n                // Instruct postMessage that these buffers in the sent message\n                // should use their Transferable trait. After the postMessage\n                // call the \"buffers\" will still be in complete if you looked,\n                // but they will all be length 0 as the data they reference has\n                // been sent to the window. This lets us send a lot of data\n                // without the normal postMessage behaviour of making a copy of\n                // all of the data for the window.\n                complete.map(response => response.buffer).filter(Boolean)\n            );\n            complete.length = 0;\n        }\n        if (jobsActive === 0) {\n            clearInterval(intervalId);\n            intervalId = null;\n        }\n    }, 1);\n};\n\n/**\n * Receive a job from the parent and fetch the requested data.\n * @param {object} options.job A job id, url, and options descriptor to perform.\n */\nconst onMessage = ({data: job}) => {\n    if (jobsActive === 0 && !intervalId) {\n        registerStep();\n    }\n\n    jobsActive++;\n\n    fetch(job.url, job.options)\n        .then(result => {\n            if (result.ok) return result.arrayBuffer();\n            if (result.status === 404) return null;\n            return Promise.reject(result.status);\n        })\n        .then(buffer => complete.push({id: job.id, buffer}))\n        .catch(error => complete.push({id: job.id, error: (error && error.message) || `Failed request: ${job.url}`}))\n        .then(() => jobsActive--);\n};\n\nif (self.fetch) {\n    postMessage({support: {fetch: true}});\n    self.addEventListener('message', onMessage);\n} else {\n    postMessage({support: {fetch: false}});\n    self.addEventListener('message', ({data: job}) => {\n        postMessage([{id: job.id, error: 'fetch is unavailable'}]);\n    });\n}\n\n\n/***/ })\n\n/******/ });\n//# sourceMappingURL=36ad3eac0ec34adbf34d.worker.js.map", __webpack_require__.p + "36ad3eac0ec34adbf34d.worker.js");
 };
 
 /***/ }),
@@ -67043,57 +66478,53 @@ module.exports = DataFormat;
   !*** ./node_modules/scratch-storage/src/FetchTool.js ***!
   \*******************************************************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-const {scratchFetch} = __webpack_require__(/*! ./scratchFetch */ "./node_modules/scratch-storage/src/scratchFetch.js");
-
-/**
- * @typedef {Request & {withCredentials: boolean}} ScratchSendRequest
- */
+/* eslint-env browser */
 
 /**
  * Get and send assets with the fetch standard web api.
  */
 class FetchTool {
     /**
-     * Is get supported?
-     * Always true for `FetchTool` because `scratchFetch` ponyfills `fetch` if necessary.
+     * Is get supported? false if the environment does not support fetch.
      * @returns {boolean} Is get supported?
      */
     get isGetSupported () {
-        return true;
+        return typeof fetch !== 'undefined';
     }
 
     /**
      * Request data from a server with fetch.
-     * @param {Request} reqConfig - Request configuration for data to get.
-     * @returns {Promise.<Uint8Array?>} Resolve to Buffer of data from server.
+     * @param {{url:string}} reqConfig - Request configuration for data to get.
+     * @param {{method:string}} options - Additional options to configure fetch.
+     * @returns {Promise.<Uint8Array>} Resolve to Buffer of data from server.
      */
     get ({url, ...options}) {
-        return scratchFetch(url, Object.assign({method: 'GET'}, options))
+        return fetch(url, Object.assign({method: 'GET'}, options))
             .then(result => {
                 if (result.ok) return result.arrayBuffer().then(b => new Uint8Array(b));
                 if (result.status === 404) return null;
-                return Promise.reject(result.status); // TODO: we should throw a proper error
+                return Promise.reject(result.status);
             });
     }
 
     /**
-     * Is sending supported?
-     * Always true for `FetchTool` because `scratchFetch` ponyfills `fetch` if necessary.
+     * Is sending supported? false if the environment does not support sending
+     * with fetch.
      * @returns {boolean} Is sending supported?
      */
     get isSendSupported () {
-        return true;
+        return typeof fetch !== 'undefined';
     }
 
     /**
      * Send data to a server with fetch.
-     * @param {ScratchSendRequest} reqConfig - Request configuration for data to send.
+     * @param {Request} reqConfig - Request configuration for data to send.
      * @returns {Promise.<string>} Server returned metadata.
      */
     send ({url, withCredentials = false, ...options}) {
-        return scratchFetch(url, Object.assign({
+        return fetch(url, Object.assign({
             credentials: withCredentials ? 'include' : 'omit'
         }, options))
             .then(response => {
@@ -67115,8 +66546,6 @@ module.exports = FetchTool;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-const {Headers, applyMetadata} = __webpack_require__(/*! ./scratchFetch */ "./node_modules/scratch-storage/src/scratchFetch.js");
-
 /**
  * Get and send assets with a worker that uses fetch.
  */
@@ -67132,13 +66561,13 @@ class PrivateFetchWorkerTool {
 
         /**
          * A possible error occurred standing up the worker.
-         * @type {Error?}
+         * @type {!Error}
          */
         this._supportError = null;
 
         /**
          * The worker that runs fetch and returns data for us.
-         * @type {Worker?}
+         * @type {!Worker}
          */
         this.worker = null;
 
@@ -67153,9 +66582,9 @@ class PrivateFetchWorkerTool {
                 // eslint-disable-next-line global-require
                 const FetchWorker = __webpack_require__(/*! worker-loader?{"inline":true,"fallback":true}!./FetchWorkerTool.worker */ "./node_modules/scratch-storage/node_modules/worker-loader/dist/cjs.js?{\"inline\":true,\"fallback\":true}!./node_modules/scratch-storage/src/FetchWorkerTool.worker.js");
 
-                const worker = new FetchWorker();
+                this.worker = new FetchWorker();
 
-                worker.addEventListener('message', ({data}) => {
+                this.worker.addEventListener('message', ({data}) => {
                     if (data.support) {
                         this._workerSupport = data.support;
                         return;
@@ -67171,8 +66600,6 @@ class PrivateFetchWorkerTool {
                         }
                     }
                 });
-
-                this.worker = worker;
             }
         } catch (error) {
             this._supportError = error;
@@ -67199,27 +66626,17 @@ class PrivateFetchWorkerTool {
      * Request data from a server with a worker using fetch.
      * @param {{url:string}} reqConfig - Request configuration for data to get.
      * @param {{method:string}} options - Additional options to configure fetch.
-     * @returns {Promise.<Buffer|Uint8Array|null>} Resolve to Buffer of data from server.
+     * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
      */
     get ({url, ...options}) {
         return new Promise((resolve, reject) => {
             // TODO: Use a Scratch standard ID generator ...
             const id = Math.random().toString(16)
                 .substring(2);
-            const augmentedOptions = applyMetadata(
-                Object.assign({method: 'GET'}, options)
-            );
-            // the Fetch spec says options.headers could be:
-            // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
-            // structured clone (postMessage) doesn't support Headers objects
-            // so turn it into an array of two-item arrays to make it to the worker intact
-            if (augmentedOptions && augmentedOptions.headers instanceof Headers) {
-                augmentedOptions.headers = Array.from(augmentedOptions.headers.entries());
-            }
             this.worker.postMessage({
                 id,
                 url,
-                options: augmentedOptions
+                options: Object.assign({method: 'GET'}, options)
             });
             this.jobs[id] = {
                 id,
@@ -67284,7 +66701,7 @@ class PublicFetchWorkerTool {
     /**
      * Request data from a server with a worker that uses fetch.
      * @param {{url:string}} reqConfig - Request configuration for data to get.
-     * @returns {Promise.<Buffer|Uint8Array|null>} Resolve to Buffer of data from server.
+     * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
      */
     get (reqConfig) {
         return this.inner.get(reqConfig);
@@ -67475,7 +66892,6 @@ const WebHelper = __webpack_require__(/*! ./WebHelper */ "./node_modules/scratch
 const _Asset = __webpack_require__(/*! ./Asset */ "./node_modules/scratch-storage/src/Asset.js");
 const _AssetType = __webpack_require__(/*! ./AssetType */ "./node_modules/scratch-storage/src/AssetType.js");
 const _DataFormat = __webpack_require__(/*! ./DataFormat */ "./node_modules/scratch-storage/src/DataFormat.js");
-const _scratchFetch = __webpack_require__(/*! ./scratchFetch */ "./node_modules/scratch-storage/src/scratchFetch.js");
 
 class ScratchStorage {
     constructor () {
@@ -67519,14 +66935,6 @@ class ScratchStorage {
      */
     get DataFormat () {
         return _DataFormat;
-    }
-
-    /**
-     * Access the `scratchFetch` module within this library.
-     * @return {module} the scratchFetch module, with properties for `scratchFetch`, `setMetadata`, etc.
-     */
-    get scratchFetch () {
-        return _scratchFetch;
     }
 
     /**
@@ -67962,130 +67370,6 @@ const minilog = __webpack_require__(/*! minilog */ "./node_modules/minilog/lib/w
 minilog.enable();
 
 module.exports = minilog('storage');
-
-
-/***/ }),
-
-/***/ "./node_modules/scratch-storage/src/scratchFetch.js":
-/*!**********************************************************!*\
-  !*** ./node_modules/scratch-storage/src/scratchFetch.js ***!
-  \**********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-const crossFetch = __webpack_require__(/*! cross-fetch */ "./node_modules/cross-fetch/dist/browser-ponyfill.js");
-
-/**
- * Metadata header names
- * @enum {string} The enum value is the name of the associated header.
- * @readonly
- */
-const RequestMetadata = {
-    /** The ID of the project associated with this request */
-    ProjectId: 'X-Project-ID',
-    /** The ID of the project run associated with this request */
-    RunId: 'X-Run-ID'
-};
-
-/**
- * Metadata headers for requests
- * @type {Headers}
- */
-const metadata = new crossFetch.Headers();
-
-/**
- * Check if there is any metadata to apply.
- * @returns {boolean} true if `metadata` has contents, or false if it is empty.
- */
-const hasMetadata = () => {
-    for (const _ of metadata) {
-        return true;
-    }
-    return false;
-};
-
-/**
- * Non-destructively merge any metadata state (if any) with the provided options object (if any).
- * If there is metadata state but no options object is provided, make a new object.
- * If there is no metadata state, return the provided options parameter without modification.
- * If there is metadata and an options object is provided, modify a copy and return it.
- * Headers in the provided options object may override headers generated from metadata state.
- * @param {RequestInit} [options] The initial request options. May be null or undefined.
- * @returns {RequestInit|undefined} the provided options parameter without modification, or a new options object.
- */
-const applyMetadata = options => {
-    if (hasMetadata()) {
-        const augmentedOptions = Object.assign({}, options);
-        augmentedOptions.headers = new crossFetch.Headers(metadata);
-        if (options && options.headers) {
-            // the Fetch spec says options.headers could be:
-            // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
-            // turn it into a Headers object to be sure of how to interact with it
-            const overrideHeaders = options.headers instanceof crossFetch.Headers ?
-                options.headers : new crossFetch.Headers(options.headers);
-            for (const [name, value] of overrideHeaders.entries()) {
-                augmentedOptions.headers.set(name, value);
-            }
-        }
-        return augmentedOptions;
-    }
-    return options;
-};
-
-/**
- * Make a network request.
- * This is a wrapper for the global fetch method, adding some Scratch-specific functionality.
- * @param {RequestInfo|URL} resource The resource to fetch.
- * @param {RequestInit} options Optional object containing custom settings for this request.
- * @see {@link https://developer.mozilla.org/docs/Web/API/fetch} for more about the fetch API.
- * @returns {Promise<Response>} A promise for the response to the request.
- */
-const scratchFetch = (resource, options) => {
-    const augmentedOptions = applyMetadata(options);
-    return crossFetch.fetch(resource, augmentedOptions);
-};
-
-/**
- * Set the value of a named request metadata item.
- * Setting the value to `null` or `undefined` will NOT remove the item.
- * Use `unsetMetadata` for that.
- * @param {RequestMetadata} name The name of the metadata item to set.
- * @param {any} value The value to set (will be converted to a string).
- */
-const setMetadata = (name, value) => {
-    metadata.set(name, value);
-};
-
-/**
- * Remove a named request metadata item.
- * @param {RequestMetadata} name The name of the metadata item to remove.
- */
-const unsetMetadata = name => {
-    metadata.delete(name);
-};
-
-module.exports = {
-    default: scratchFetch,
-
-    Headers: crossFetch.Headers,
-    RequestMetadata,
-    applyMetadata,
-    scratchFetch,
-    setMetadata,
-    unsetMetadata
-};
-
-if (true) {
-    /**
-     * Retrieve a named request metadata item.
-     * Only for use in tests.
-     * @param {RequestMetadata} name The name of the metadata item to retrieve.
-     * @returns {any} value The value of the metadata item, or `undefined` if it was not found.
-     */
-    const getMetadata = name => metadata.get(name);
-
-    module.exports.getMetadata = getMetadata;
-}
 
 
 /***/ }),
@@ -105640,7 +104924,7 @@ module.exports = function() {
 /*! exports provided: name, version, description, author, license, homepage, repository, main, browser, scripts, config, tap, dependencies, peerDependencies, devDependencies, default */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"name\":\"scratch-vm\",\"version\":\"2.0.6\",\"description\":\"Virtual Machine for Scratch 3.0\",\"author\":\"Massachusetts Institute of Technology\",\"license\":\"BSD-3-Clause\",\"homepage\":\"https://github.com/scratchfoundation/scratch-vm#readme\",\"repository\":{\"type\":\"git\",\"url\":\"https://github.com/scratchfoundation/scratch-vm.git\",\"sha\":\"f4da873adc3d759e7f675f41280ed4735579f595\"},\"main\":\"./dist/node/scratch-vm.js\",\"browser\":\"./src/index.js\",\"scripts\":{\"build\":\"npm run docs && webpack --progress --colors --bail\",\"coverage\":\"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov\",\"docs\":\"jsdoc -c .jsdoc.json\",\"i18n:src\":\"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js\",\"i18n:push\":\"tx-push-src scratch-editor extensions translations/core/en.json\",\"lint\":\"eslint . && format-message lint src/**/*.js\",\"prepare\":\"path-exists .git && husky install || echo 'not installed husky because .git does not exist'\",\"prepublish\":\"in-publish && npm run build || not-in-publish\",\"start\":\"webpack-dev-server\",\"tap\":\"tap ./test/{unit,integration}/*.js\",\"tap:unit\":\"tap ./test/unit/*.js\",\"tap:integration\":\"tap ./test/integration/*.js\",\"test\":\"npm run lint && npm run tap\",\"watch\":\"webpack --progress --colors --watch\",\"version\":\"json -f package.json -I -e \\\"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\\\"\"},\"config\":{\"commitizen\":{\"path\":\"cz-conventional-changelog\"}},\"tap\":{\"branches\":60,\"functions\":70,\"lines\":70,\"statements\":70},\"dependencies\":{\"@vernier/godirect\":\"1.5.0\",\"arraybuffer-loader\":\"^1.0.6\",\"atob\":\"2.1.2\",\"btoa\":\"1.2.1\",\"canvas-toBlob\":\"1.0.0\",\"decode-html\":\"2.0.0\",\"diff-match-patch\":\"1.0.4\",\"format-message\":\"6.2.1\",\"htmlparser2\":\"3.10.0\",\"immutable\":\"3.8.1\",\"jszip\":\"^3.1.5\",\"minilog\":\"3.1.0\",\"scratch-parser\":\"5.1.1\",\"scratch-sb1-converter\":\"0.2.7\",\"scratch-translate-extension-languages\":\"0.0.20191118205314\",\"skyway-js\":\"^4.4.1\",\"text-encoding\":\"0.7.0\",\"uuid\":\"8.3.2\",\"worker-loader\":\"^1.1.1\"},\"peerDependencies\":{\"scratch-svg-renderer\":\"^0.2.0-prerelease\"},\"devDependencies\":{\"@babel/core\":\"7.13.10\",\"@babel/preset-env\":\"7.14.8\",\"@commitlint/cli\":\"17.0.2\",\"@commitlint/config-conventional\":\"17.0.2\",\"adm-zip\":\"0.4.11\",\"babel-eslint\":\"10.1.0\",\"babel-loader\":\"8.2.2\",\"callsite\":\"1.0.0\",\"copy-webpack-plugin\":\"4.5.4\",\"docdash\":\"1.2.0\",\"eslint\":\"5.3.0\",\"eslint-config-scratch\":\"5.1.0\",\"expose-loader\":\"0.7.5\",\"file-loader\":\"2.0.0\",\"format-message-cli\":\"6.2.0\",\"husky\":\"8.0.1\",\"in-publish\":\"2.0.1\",\"js-md5\":\"0.7.3\",\"jsdoc\":\"3.6.6\",\"json\":\"^9.0.4\",\"lodash.defaultsdeep\":\"4.6.1\",\"path-exists-cli\":\"^2.0.0\",\"pngjs\":\"3.3.3\",\"scratch-audio\":\"0.1.0-prerelease.20221123180128\",\"scratch-blocks\":\"0.1.0-prerelease.20230527085947\",\"scratch-l10n\":\"3.16.20231006032155\",\"scratch-render\":\"0.1.0-prerelease.20230913153807\",\"scratch-render-fonts\":\"1.0.0-prerelease.20221102164332\",\"scratch-semantic-release-config\":\"1.0.8\",\"scratch-storage\":\"2.2.1\",\"scratch-svg-renderer\":\"0.2.0-prerelease.20210727023023\",\"script-loader\":\"0.7.2\",\"semantic-release\":\"19.0.5\",\"stats.js\":\"0.17.0\",\"tap\":\"16.2.0\",\"tiny-worker\":\"2.3.0\",\"uglifyjs-webpack-plugin\":\"1.2.7\",\"webpack\":\"4.46.0\",\"webpack-cli\":\"3.1.0\",\"webpack-dev-server\":\"3.11.2\"}}");
+module.exports = JSON.parse("{\"name\":\"scratch-vm\",\"version\":\"2.0.6\",\"description\":\"Virtual Machine for Scratch 3.0\",\"author\":\"Massachusetts Institute of Technology\",\"license\":\"BSD-3-Clause\",\"homepage\":\"https://github.com/scratchfoundation/scratch-vm#readme\",\"repository\":{\"type\":\"git\",\"url\":\"https://github.com/scratchfoundation/scratch-vm.git\",\"sha\":\"f4da873adc3d759e7f675f41280ed4735579f595\"},\"main\":\"./dist/node/scratch-vm.js\",\"browser\":\"./src/index.js\",\"scripts\":{\"build\":\"npm run docs && webpack --progress --colors --bail\",\"coverage\":\"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov\",\"docs\":\"jsdoc -c .jsdoc.json\",\"i18n:src\":\"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js\",\"i18n:push\":\"tx-push-src scratch-editor extensions translations/core/en.json\",\"lint\":\"eslint . && format-message lint src/**/*.js\",\"prepare\":\"path-exists .git && husky install || echo 'not installed husky because .git does not exist'\",\"prepublish\":\"in-publish && npm run build || not-in-publish\",\"start\":\"webpack-dev-server\",\"tap\":\"tap ./test/{unit,integration}/*.js\",\"tap:unit\":\"tap ./test/unit/*.js\",\"tap:integration\":\"tap ./test/integration/*.js\",\"test\":\"npm run lint && npm run tap\",\"watch\":\"webpack --progress --colors --watch\",\"version\":\"json -f package.json -I -e \\\"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\\\"\"},\"config\":{\"commitizen\":{\"path\":\"cz-conventional-changelog\"}},\"tap\":{\"branches\":60,\"functions\":70,\"lines\":70,\"statements\":70},\"dependencies\":{\"@vernier/godirect\":\"1.5.0\",\"arraybuffer-loader\":\"^1.0.6\",\"atob\":\"2.1.2\",\"btoa\":\"1.2.1\",\"canvas-toBlob\":\"1.0.0\",\"decode-html\":\"2.0.0\",\"diff-match-patch\":\"1.0.4\",\"format-message\":\"6.2.1\",\"htmlparser2\":\"3.10.0\",\"immutable\":\"3.8.1\",\"jszip\":\"^3.1.5\",\"minilog\":\"3.1.0\",\"scratch-parser\":\"5.1.1\",\"scratch-sb1-converter\":\"0.2.7\",\"scratch-translate-extension-languages\":\"0.0.20191118205314\",\"skyway-js\":\"^4.4.1\",\"text-encoding\":\"0.7.0\",\"worker-loader\":\"^1.1.1\"},\"peerDependencies\":{\"scratch-svg-renderer\":\"^0.2.0-prerelease\"},\"devDependencies\":{\"@babel/core\":\"7.13.10\",\"@babel/preset-env\":\"7.14.8\",\"@commitlint/cli\":\"17.0.2\",\"@commitlint/config-conventional\":\"17.0.2\",\"adm-zip\":\"0.4.11\",\"babel-eslint\":\"10.1.0\",\"babel-loader\":\"8.2.2\",\"callsite\":\"1.0.0\",\"copy-webpack-plugin\":\"4.5.4\",\"docdash\":\"1.2.0\",\"eslint\":\"5.3.0\",\"eslint-config-scratch\":\"5.1.0\",\"expose-loader\":\"0.7.5\",\"file-loader\":\"2.0.0\",\"format-message-cli\":\"6.2.0\",\"husky\":\"8.0.1\",\"in-publish\":\"2.0.1\",\"js-md5\":\"0.7.3\",\"jsdoc\":\"3.6.6\",\"json\":\"^9.0.4\",\"lodash.defaultsdeep\":\"4.6.1\",\"path-exists-cli\":\"^2.0.0\",\"pngjs\":\"3.3.3\",\"scratch-audio\":\"0.1.0-prerelease.20221123180128\",\"scratch-blocks\":\"0.1.0-prerelease.20230527085947\",\"scratch-l10n\":\"3.16.20231006032155\",\"scratch-render\":\"0.1.0-prerelease.20230913153807\",\"scratch-render-fonts\":\"1.0.0-prerelease.20221102164332\",\"scratch-semantic-release-config\":\"1.0.8\",\"scratch-storage\":\"2.1.0\",\"scratch-svg-renderer\":\"0.2.0-prerelease.20210727023023\",\"script-loader\":\"0.7.2\",\"semantic-release\":\"19.0.5\",\"stats.js\":\"0.17.0\",\"tap\":\"16.2.0\",\"tiny-worker\":\"2.3.0\",\"uglifyjs-webpack-plugin\":\"1.2.7\",\"webpack\":\"4.46.0\",\"webpack-cli\":\"3.1.0\",\"webpack-dev-server\":\"3.11.2\"}}");
 
 /***/ }),
 
@@ -112912,8 +112196,6 @@ var EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/even
 var _require = __webpack_require__(/*! immutable */ "./node_modules/immutable/dist/immutable.js"),
     OrderedMap = _require.OrderedMap;
 
-var uuid = __webpack_require__(/*! uuid */ "./node_modules/uuid/dist/esm-browser/index.js");
-
 var ArgumentType = __webpack_require__(/*! ../extension-support/argument-type */ "./src/extension-support/argument-type.js");
 
 var Blocks = __webpack_require__(/*! ./blocks */ "./src/engine/blocks.js");
@@ -112944,9 +112226,7 @@ var Variable = __webpack_require__(/*! ./variable */ "./src/engine/variable.js")
 
 var xmlEscape = __webpack_require__(/*! ../util/xml-escape */ "./src/util/xml-escape.js");
 
-var ScratchLinkWebSocket = __webpack_require__(/*! ../util/scratch-link-websocket */ "./src/util/scratch-link-websocket.js");
-
-var fetchWithTimeout = __webpack_require__(/*! ../util/fetch-with-timeout */ "./src/util/fetch-with-timeout.js"); // Virtual I/O devices.
+var ScratchLinkWebSocket = __webpack_require__(/*! ../util/scratch-link-websocket */ "./src/util/scratch-link-websocket.js"); // Virtual I/O devices.
 
 
 var Clock = __webpack_require__(/*! ../io/clock */ "./src/io/clock.js");
@@ -113354,8 +112634,6 @@ var Runtime = /*#__PURE__*/function (_EventEmitter) {
     _this.origin = null;
 
     _this._initScratchLink();
-
-    _this.resetRunId();
 
     return _this;
   }
@@ -114382,8 +113660,6 @@ var Runtime = /*#__PURE__*/function (_EventEmitter) {
     key: "attachStorage",
     value: function attachStorage(storage) {
       this.storage = storage;
-      fetchWithTimeout.setFetch(storage.scratchFetch.scratchFetch);
-      this.resetRunId();
     } // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
 
@@ -114804,21 +114080,6 @@ var Runtime = /*#__PURE__*/function (_EventEmitter) {
       }
     }
     /**
-     * Reset the Run ID. Call this any time the project logically starts, stops, or changes identity.
-     */
-
-  }, {
-    key: "resetRunId",
-    value: function resetRunId() {
-      if (!this.storage) {
-        // see also: attachStorage
-        return;
-      }
-
-      var newRunId = uuid.v1();
-      this.storage.scratchFetch.setMetadata(this.storage.scratchFetch.RequestMetadata.RunId, newRunId);
-    }
-    /**
      * Start all threads that start with the green flag.
      */
 
@@ -114868,7 +114129,6 @@ var Runtime = /*#__PURE__*/function (_EventEmitter) {
 
 
       this.threads = [];
-      this.resetRunId();
     }
     /**
      * Repeatedly run `sequencer.stepThreads` and filter out
@@ -115363,14 +114623,13 @@ var Runtime = /*#__PURE__*/function (_EventEmitter) {
       return this._cloneCounter < Runtime.MAX_CLONES;
     }
     /**
-     * Handle that the project has loaded in the Virtual Machine.
+     * Report that the project has loaded in the Virtual Machine.
      */
 
   }, {
-    key: "handleProjectLoaded",
-    value: function handleProjectLoaded() {
+    key: "emitProjectLoaded",
+    value: function emitProjectLoaded() {
       this.emit(Runtime.PROJECT_LOADED);
-      this.resetRunId();
     }
     /**
      * Report that the project has changed in a way that would affect serialization
@@ -133474,8 +132733,7 @@ var Clone = __webpack_require__(/*! ../../util/clone */ "./src/util/clone.js");
 
 var log = __webpack_require__(/*! ../../util/log */ "./src/util/log.js");
 
-var _require = __webpack_require__(/*! ../../util/fetch-with-timeout */ "./src/util/fetch-with-timeout.js"),
-    fetchWithTimeout = _require.fetchWithTimeout;
+var fetchWithTimeout = __webpack_require__(/*! ../../util/fetch-with-timeout */ "./src/util/fetch-with-timeout.js");
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
  * @type {string}
@@ -134304,8 +133562,7 @@ var Cast = __webpack_require__(/*! ../../util/cast */ "./src/util/cast.js");
 
 var log = __webpack_require__(/*! ../../util/log */ "./src/util/log.js");
 
-var _require = __webpack_require__(/*! ../../util/fetch-with-timeout */ "./src/util/fetch-with-timeout.js"),
-    fetchWithTimeout = _require.fetchWithTimeout;
+var fetchWithTimeout = __webpack_require__(/*! ../../util/fetch-with-timeout */ "./src/util/fetch-with-timeout.js");
 
 var languageNames = __webpack_require__(/*! scratch-translate-extension-languages */ "./node_modules/scratch-translate-extension-languages/languages.json");
 
@@ -147647,29 +146904,8 @@ module.exports = debugLogger;
   !*** ./src/util/fetch-with-timeout.js ***!
   \****************************************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-/* WEBPACK VAR INJECTION */(function(global) {/**
- * @callback FetchFunction
- * @param {RequestInfo|URL} input
- * @param {RequestInit|undefined} [init]
- * @returns {Promise<Response>}
- */
-
-/**
- * @type {FetchFunction}
- */
-var myFetch = global.fetch;
-/**
- * Tell `fetchWithTimeout` to use a specific `fetch` function.
- * By default, `fetchWithTimeout` will use the global `fetch` function.
- * If there is no global `fetch`, then `fetchWithTimeout` will fail unless provided with an alternative.
- * @param {FetchFunction} newFetch The new `fetch` function to use within fetchWithTimeout.
- */
-
-var setFetch = function setFetch(newFetch) {
-  myFetch = newFetch;
-};
 /**
  * Fetch a remote resource like `fetch` does, but with a time limit.
  * @param {Request|string} resource Remote resource to fetch.
@@ -147677,15 +146913,13 @@ var setFetch = function setFetch(newFetch) {
  * @param {number} timeout The amount of time before the request is canceled, in milliseconds
  * @returns {Promise<Response>} The response from the server.
  */
-
-
 var fetchWithTimeout = function fetchWithTimeout(resource, init, timeout) {
   var timeoutID = null; // Not supported in Safari <11
 
   var controller = window.AbortController ? new window.AbortController() : null;
   var signal = controller ? controller.signal : null; // The fetch call races a timer.
 
-  return Promise.race([myFetch(resource, Object.assign({
+  return Promise.race([fetch(resource, Object.assign({
     signal: signal
   }, init)).then(function (response) {
     clearTimeout(timeoutID);
@@ -147698,11 +146932,7 @@ var fetchWithTimeout = function fetchWithTimeout(resource, init, timeout) {
   })]);
 };
 
-module.exports = {
-  fetchWithTimeout: fetchWithTimeout,
-  setFetch: setFetch
-};
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+module.exports = fetchWithTimeout;
 
 /***/ }),
 
@@ -149426,7 +148656,7 @@ var VirtualMachine = /*#__PURE__*/function (_EventEmitter) {
       return validationPromise.then(function (validatedInput) {
         return _this2.deserializeProject(validatedInput[0], validatedInput[1]);
       }).then(function () {
-        return _this2.runtime.handleProjectLoaded();
+        return _this2.runtime.emitProjectLoaded();
       }).catch(function (error) {
         // Intentionally rejecting here (want errors to be handled by caller)
         if (error.hasOwnProperty('validationError')) {
