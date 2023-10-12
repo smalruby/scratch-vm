@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>Boost - Documentation</title>
+    <title>WebBLE - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -32,7 +32,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">Boost</h1>
+    <h1 class="page-title">WebBLE</h1>
     
 
     
@@ -45,10 +45,8 @@
 <header>
     
         <h2>
-        Boost
+        WebBLE
         </h2>
-        
-            <div class="class-description usertext"><p>Manage communication with a Boost peripheral over a Bluetooth Low Energy client socket.</p></div>
         
     
 </header>
@@ -60,10 +58,8 @@
             
 
     
-    <h2>Constructor</h2>
-    
 
-    <h4 class="name" id="Boost"><span class="type-signature"></span>new Boost<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="WebBLE"><span class="type-signature"></span>new WebBLE<span class="signature">(runtime, extensionId, peripheralOptions, connectCallback, resetCallback)</span><span class="type-signature"></span></h4>
 
     
 
@@ -109,6 +105,10 @@
 
 
 
+<div class="description usertext">
+    <p>A BLE peripheral object.  It handles connecting, over Web Bluetooth API, to
+BLE peripherals, and reading and writing data to them.</p>
+</div>
 
 
 
@@ -117,6 +117,172 @@
 
 
 
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>runtime</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Runtime.html">Runtime</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the Runtime for sending/receiving GUI update events.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>extensionId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the id of the extension using this object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>peripheralOptions</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the list of options for peripheral discovery.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>connectCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>a callback for connection.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>resetCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    <code>null</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>a callback for resetting extension state.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -157,7 +323,7 @@
 
         
             
-<h4 class="name" id="_ble"><span class="type-signature">(private) </span>_ble<span class="type-signature"> :<a href="BLE.html">BLE</a></span></h4>
+<h4 class="name" id="_device"><span class="type-signature"></span>_device<span class="type-signature"> :BluetoothDevice</span></h4>
 
 
 
@@ -203,7 +369,7 @@
 
 
 <div class="description usertext">
-    <p>The Bluetooth connection socket for reading/writing peripheral data.</p>
+    <p>Remote device which have been connected.</p>
 </div>
 
 
@@ -212,7 +378,7 @@
     <ul>
         <li>
             
-<span class="param-type"><a href="BLE.html">BLE</a></span>
+<span class="param-type">BluetoothDevice</span>
 
 
         </li>
@@ -225,7 +391,7 @@
 
         
             
-<h4 class="name" id="_colorSamples"><span class="type-signature">(private) </span>_colorSamples<span class="type-signature"> :Array</span></h4>
+<h4 class="name" id="_server"><span class="type-signature"></span>_server<span class="type-signature"> :BluetoothRemoteGATTServer</span></h4>
 
 
 
@@ -271,7 +437,7 @@
 
 
 <div class="description usertext">
-    <p>An array of values from the Boost Vision Sensor.</p>
+    <p>Remote GATT server</p>
 </div>
 
 
@@ -280,694 +446,11 @@
     <ul>
         <li>
             
-<span class="param-type">Array</span>
+<span class="param-type">BluetoothRemoteGATTServer</span>
 
 
         </li>
     </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_extensionId"><span class="type-signature"></span>_extensionId<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>The id of the extension this peripheral belongs to.</p>
-</div>
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_motors"><span class="type-signature">(private) </span>_motors<span class="type-signature"> :Array.&lt;<a href="BoostMotor.html">BoostMotor</a>></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>A list of motors registered by the Boost hardware.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Array.&lt;<a href="BoostMotor.html">BoostMotor</a>></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_pingDeviceId"><span class="type-signature">(private) </span>_pingDeviceId<span class="type-signature"> :number</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>An interval id for the battery check interval.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">number</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_ports"><span class="type-signature">(private) </span>_ports<span class="type-signature"> :Array.&lt;string></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>A list of the ids of the physical or virtual sensors.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Array.&lt;string></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_rateLimiter"><span class="type-signature">(private) </span>_rateLimiter<span class="type-signature"> :<a href="RateLimiter.html">RateLimiter</a></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>A rate limiter utility, to help limit the rate at which we send BLE messages
-over the socket to Scratch Link to a maximum number of sends per second.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type"><a href="RateLimiter.html">RateLimiter</a></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_runtime"><span class="type-signature">(private) </span>_runtime<span class="type-signature"> :<a href="Runtime.html">Runtime</a></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>The Scratch 3.0 runtime used to trigger the green flag button.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type"><a href="Runtime.html">Runtime</a></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_sensors"><span class="type-signature">(private) </span>_sensors<span class="type-signature"> :Object.&lt;string, number></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>The most recently received value for each sensor.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Object.&lt;string, number></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="color"><span class="type-signature"></span>color<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="previousColor"><span class="type-signature"></span>previousColor<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="tiltX"><span class="type-signature"></span>tiltX<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="tiltY"><span class="type-signature"></span>tiltY<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
 
 
 
@@ -985,7 +468,7 @@ over the socket to Scratch Link to a maximum number of sends per second.</p>
 
     
 
-    <h4 class="name" id="_clearPort"><span class="type-signature">(private) </span>_clearPort<span class="signature">(portID)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="connectPeripheral"><span class="type-signature"></span>connectPeripheral<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -1032,7 +515,8 @@ over the socket to Scratch Link to a maximum number of sends per second.</p>
 
 
 <div class="description usertext">
-    <p>Clear the sensors or motors present on the ports.</p>
+    <p>Try connecting to the GATT server of the device, and then call the connect
+callback when connection is successful.</p>
 </div>
 
 
@@ -1043,792 +527,6 @@ over the socket to Scratch Link to a maximum number of sends per second.</p>
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>portID</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the port to clear.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_onConnect"><span class="type-signature">(private) </span>_onConnect<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Starts reading data from peripheral after BLE has connected.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_onMessage"><span class="type-signature">(private) </span>_onMessage<span class="signature">(base64)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Process the sensor data from the incoming BLE characteristic.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>base64</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the incoming BLE data.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_pingDevice"><span class="type-signature">(private) </span>_pingDevice<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Ping the Boost hub. If the Boost hub has disconnected
-for some reason, the BLE socket will get an error back and automatically
-close the socket.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_registerSensorOrMotor"><span class="type-signature">(private) </span>_registerSensorOrMotor<span class="signature">(portID, type)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Register a new sensor or motor connected at a port.  Store the type of
-sensor or motor internally, and then register for notifications on input
-values if it is a sensor.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>portID</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the port to register a sensor or motor on.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>type</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the type ID of the sensor or motor</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="boostColorForIndex"><span class="type-signature"></span>boostColorForIndex<span class="signature">(index)</span><span class="type-signature"> &rarr; {<a href="global.html#BoostColor">BoostColor</a>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Look up the color id for an index received from the vision sensor.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>index</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the color index to look up.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>the color id for this index.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="global.html#BoostColor">BoostColor</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="connect"><span class="type-signature"></span>connect<span class="signature">(id)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Called by the runtime when user wants to connect to a certain Boost peripheral.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>id</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the id of the peripheral to connect to.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -1900,7 +598,8 @@ values if it is a sensor.</p>
 
 
 <div class="description usertext">
-    <p>Disconnects from the current BLE socket and resets state.</p>
+    <p>Disconnect from the device and clean up.
+Then emit the connection state by the runtime.</p>
 </div>
 
 
@@ -1935,7 +634,7 @@ values if it is a sensor.</p>
 
     
 
-    <h4 class="name" id="generateInputCommand"><span class="type-signature"></span>generateInputCommand<span class="signature">(portID, mode, delta, enableNotifications)</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="handleDisconnectError"><span class="type-signature"></span>handleDisconnectError<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -1982,179 +681,41 @@ values if it is a sensor.</p>
 
 
 <div class="description usertext">
-    <p>Generate a Boost 'Input Command' in the byte array format
-(COMMAND ID, COMMAND TYPE, CONNECT ID, TYPE ID, MODE, DELTA INTERVAL (4 BYTES),
-UNIT, NOTIFICATIONS ENABLED).</p>
-<p>This sends a command to the Boost that sets that input format
-of the specified inputs and sets value change notifications.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>portID</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the port (Connect ID) to send a command to.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>mode</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the mode of the input sensor.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>delta</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the delta change needed to trigger notification.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>enableNotifications</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>whether to enable notifications.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <ul>
-<li>a generated input command.</li>
+    <p>Handle an error resulting from losing connection to a peripheral.</p>
+<p>This could be due to:</p>
+<ul>
+<li>battery depletion</li>
+<li>going out of bluetooth range</li>
+<li>being powered down</li>
 </ul>
+<p>Disconnect the device, and if the extension using this object has a
+reset callback, call it. Finally, emit an error to the runtime.</p>
 </div>
 
 
 
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">array</span>
 
 
-    </dd>
-</dl>
 
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2163,7 +724,7 @@ of the specified inputs and sets value change notifications.</p>
 
     
 
-    <h4 class="name" id="generateOutputCommand"><span class="type-signature"></span>generateOutputCommand<span class="signature">(portID, execution, subCommand, payload)</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="isConnected"><span class="type-signature"></span>isConnected<span class="signature">()</span><span class="type-signature"> &rarr; {bool}</span></h4>
 
     
 
@@ -2208,236 +769,6 @@ of the specified inputs and sets value change notifications.</p>
 
 
 
-
-<div class="description usertext">
-    <p>Generate a Boost 'Output Command' in the byte array format
-(COMMON HEADER, PORT ID, EXECUTION BYTE, SUBCOMMAND ID, PAYLOAD).</p>
-<p>Payload is accepted as an array since these vary across different subcommands.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>portID</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the port (Connect ID) to send a command to.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>execution</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Byte containing startup/completion information</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>subCommand</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the id of the subcommand byte.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>payload</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the list of bytes to send as subcommand payload</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <ul>
-<li>a generated output command.</li>
-</ul>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">array</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="isConnected"><span class="type-signature"></span>isConnected<span class="signature">()</span><span class="type-signature"> &rarr; {boolean}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Called by the runtime to detect whether the Boost peripheral is connected.</p>
-</div>
 
 
 
@@ -2467,9 +798,7 @@ of the specified inputs and sets value change notifications.</p>
 
         
 <div class="param-desc">
-    <ul>
-<li>the connected state.</li>
-</ul>
+    <p>whether the peripheral is connected.</p>
 </div>
 
 
@@ -2480,7 +809,7 @@ of the specified inputs and sets value change notifications.</p>
     </dt>
     <dd>
         
-<span class="param-type">boolean</span>
+<span class="param-type">bool</span>
 
 
     </dd>
@@ -2495,7 +824,7 @@ of the specified inputs and sets value change notifications.</p>
 
     
 
-    <h4 class="name" id="motor"><span class="type-signature"></span>motor<span class="signature">(index)</span><span class="type-signature"> &rarr; {<a href="BoostMotor.html">BoostMotor</a>}</span></h4>
+    <h4 class="name" id="onDisconnected"><span class="type-signature"></span>onDisconnected<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -2542,7 +871,89 @@ of the specified inputs and sets value change notifications.</p>
 
 
 <div class="description usertext">
-    <p>Access a particular motor on this peripheral.</p>
+    <p>Called when disconnected by the device.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="read"><span class="type-signature"></span>read<span class="signature">(serviceId, characteristicId, optStartNotifications, onCharacteristicChanged)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Read from the specified ble service.</p>
 </div>
 
 
@@ -2567,327 +978,6 @@ of the specified inputs and sets value change notifications.</p>
 
         <th>Type</th>
 
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>index</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">int</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the index of the desired motor.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <ul>
-<li>the BoostMotor instance, if any, at that index.</li>
-</ul>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="BoostMotor.html">BoostMotor</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="reset"><span class="type-signature"></span>reset<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Reset all the state and timeout/interval ids.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="scan"><span class="type-signature"></span>scan<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Called by the runtime when user wants to scan for a Boost peripheral.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="send"><span class="type-signature"></span>send<span class="signature">(uuid, message, useLimiter<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Write a message to the Boost peripheral BLE socket.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
         
 
         
@@ -2903,7 +993,7 @@ of the specified inputs and sets value change notifications.</p>
 
         <tr>
             
-                <td class="name"><code>uuid</code></td>
+                <td class="name"><code>serviceId</code></td>
             
 
             <td class="type">
@@ -2916,14 +1006,6 @@ of the specified inputs and sets value change notifications.</p>
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
@@ -2931,34 +1013,26 @@ of the specified inputs and sets value change notifications.</p>
                 </td>
             
 
-            <td class="description last"><p>the UUID of the characteristic to write to</p></td>
+            <td class="description last"><p>the ble service to read.</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>message</code></td>
+                <td class="name"><code>characteristicId</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array</span>
+<span class="param-type">number</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
@@ -2966,14 +1040,14 @@ of the specified inputs and sets value change notifications.</p>
                 </td>
             
 
-            <td class="description last"><p>the message to write.</p></td>
+            <td class="description last"><p>the ble characteristic to read.</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>useLimiter</code></td>
+                <td class="name"><code>optStartNotifications</code></td>
             
 
             <td class="type">
@@ -2986,26 +1060,46 @@ of the specified inputs and sets value change notifications.</p>
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
 
+            
+                <td class="default">
                 
-
+                    <code>false</code>
                 
                 </td>
+            
+
+            <td class="description last"><p>whether to start receiving characteristic change notifications.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>onCharacteristicChanged</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
             
 
             
                 <td class="default">
                 
-                    <code>true</code>
+                    <code>null</code>
                 
                 </td>
             
 
-            <td class="description last"><p>if true, use the rate limiter</p></td>
+            <td class="description last"><p>callback for characteristic change notifications
+like function(base64message).</p></td>
         </tr>
 
     
@@ -3032,7 +1126,7 @@ of the specified inputs and sets value change notifications.</p>
         
 <div class="param-desc">
     <ul>
-<li>a promise result of the write operation</li>
+<li>a promise from the remote read request which resolve {message: base64string}.</li>
 </ul>
 </div>
 
@@ -3059,7 +1153,7 @@ of the specified inputs and sets value change notifications.</p>
 
     
 
-    <h4 class="name" id="setLED"><span class="type-signature"></span>setLED<span class="signature">(inputRGB)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id="requestPeripheral"><span class="type-signature"></span>requestPeripheral<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -3106,7 +1200,90 @@ of the specified inputs and sets value change notifications.</p>
 
 
 <div class="description usertext">
-    <p>Set the Boost peripheral's LED to a specific color.</p>
+    <p>Request connection to the peripheral.
+Request user to choose a device, and then connect it automatically.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="startNotifications"><span class="type-signature"></span>startNotifications<span class="signature">(serviceId, characteristicId, onCharacteristicChanged)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Start receiving notifications from the specified ble service.</p>
 </div>
 
 
@@ -3134,6 +1311,8 @@ of the specified inputs and sets value change notifications.</p>
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -3144,13 +1323,13 @@ of the specified inputs and sets value change notifications.</p>
 
         <tr>
             
-                <td class="name"><code>inputRGB</code></td>
+                <td class="name"><code>serviceId</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">int</span>
+<span class="param-type">number</span>
 
 
             
@@ -3159,8 +1338,69 @@ of the specified inputs and sets value change notifications.</p>
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last"><p>a 24-bit RGB color in 0xRRGGBB format.</p></td>
+            <td class="description last"><p>the ble service to read.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>characteristicId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the ble characteristic to get notifications from.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>onCharacteristicChanged</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    <code>null</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>callback for characteristic change notifications
+like function(base64message).</p></td>
         </tr>
 
     
@@ -3187,7 +1427,7 @@ of the specified inputs and sets value change notifications.</p>
         
 <div class="param-desc">
     <ul>
-<li>a promise of the completion of the set led send operation.</li>
+<li>a promise from the remote startNotifications request.</li>
 </ul>
 </div>
 
@@ -3214,7 +1454,7 @@ of the specified inputs and sets value change notifications.</p>
 
     
 
-    <h4 class="name" id="setLEDMode"><span class="type-signature"></span>setLEDMode<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+    <h4 class="name" id="write"><span class="type-signature"></span>write<span class="signature">(serviceId, characteristicId, message, encoding, withResponse)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
 
     
 
@@ -3261,7 +1501,7 @@ of the specified inputs and sets value change notifications.</p>
 
 
 <div class="description usertext">
-    <p>Sets the input mode of the LED to RGB.</p>
+    <p>Write data to the specified ble service.</p>
 </div>
 
 
@@ -3272,6 +1512,173 @@ of the specified inputs and sets value change notifications.</p>
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>serviceId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the ble service to write.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>characteristicId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the ble characteristic to write.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>message</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the message to send.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>encoding</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    <code>null</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>the message encoding type.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>withResponse</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    <code>null</code>
+                
+                </td>
+            
+
+            <td class="description last"><p>if true, resolve after peripheral's response.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -3293,7 +1700,7 @@ of the specified inputs and sets value change notifications.</p>
         
 <div class="param-desc">
     <ul>
-<li>a promise returned by the send operation.</li>
+<li>a promise from the remote send request.</li>
 </ul>
 </div>
 
@@ -3312,170 +1719,6 @@ of the specified inputs and sets value change notifications.</p>
 </dl>
 
     
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="stopAll"><span class="type-signature"></span>stopAll<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Stop the motors on the Boost peripheral.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="stopAllMotors"><span class="type-signature"></span>stopAllMotors<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Stop all the motors that are currently running.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
