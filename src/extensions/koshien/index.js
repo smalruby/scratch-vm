@@ -2,9 +2,15 @@ import ArgumentType from '../../extension-support/argument-type';
 import BlockType from '../../extension-support/block-type';
 import TargetType from '../../extension-support/target-type';
 import Variable from '../../engine/variable';
+import Cast from '../../util/cast';
 
 import blockIcon from './block-icon.png';
 import translations from './translations.json';
+import KoshienClient from './koshien-client';
+import Position from './position';
+import Map from './map';
+import {v4 as uuidv4} from 'uuid';
+import log from '../../util/log';
 
 let formatMessage = messageData => messageData.defaultMessage;
 
@@ -22,6 +28,9 @@ const setupTranslations = () => {
 };
 
 const EXTENSION_ID = 'koshien';
+
+// プレイヤー名の最大長
+const PLAYER_NAME_LIMIT = 14;
 
 /**
  * Enum for item.
@@ -80,54 +89,11 @@ const KoshienObjectName = {
     BOMB: 'bomb'
 };
 
-/**
- * A client of Smalruby Koshien game server.
- */
-class KoshienClient {
-    /**
-     * Construct a Client of Smalruby Koshien game server.
-     * @param {Runtime} runtime - the Scratch 3.0 runtime
-     * @param {string} extensionId - the id of the extension
-     */
-    constructor (runtime, extensionId) {
-
-        /**
-         * The Scratch 3.0 runtime used to trigger the green flag button.
-         * @type {Runtime}
-         * @private
-         */
-        this.runtime = runtime;
-
-        /**
-         * The id of the extension this client belongs to.
-         */
-        this._extensionId = extensionId;
-
-        this._isConnected = false;
-        this._playerName = null;
-    }
-
-    isConnected () {
-        return this._isConnected;
-
-    }
-
-    connect (playerName) {
-        this._playerName = playerName;
-        this._isConnected = true;
-    }
-
-    // eslint-disable-next-line no-unused-vars
-    moveTo (position) {
-        return new Promise(resolve => resolve());
-    }
-
-    calcRoute (props) {
-        // eslint-disable-next-line no-unused-vars
-        const {src, dst, exceptCells, result} = props;
-        return new Promise(resolve => resolve());
-    }
-}
+const ConnectionStatus = {
+    INITIAL: 'initial',
+    CONNECTING: 'connecting',
+    CONNECTED: 'connected'
+};
 
 /**
  * Scratch 3.0 blocks to make Smalruby Koshien AI.
@@ -402,7 +368,38 @@ class KoshienBlocks {
             formatMessage = runtime.formatMessage;
         }
 
-        this._client = new KoshienClient(this.runtime, KoshienBlocks.EXTENSION_ID);
+        this._koshienClient = new KoshienClient(this.runtime);
+
+        this._isStarted = false;
+        this._isConnected = false;
+
+        this._playerName = 'player1';
+        this._host = '127.0.0.1:3000';
+        this._playerId = uuidv4();
+        this._playerSide = 1;
+        this._score = 0;
+        this._requestCount = 0;
+        this._moved = false;
+        this._turn = 1;
+
+        this._connectionStatus = ConnectionStatus.INITIAL;
+        this._goal = new Position(null);
+        this._myMap = new Map(null);
+        this._x = null;
+        this._y = null;
+        this._otherPlayerPos = new Position(null);
+        this._enemyPos = new Position(null);
+
+        this.runtime.on('PROJECT_START', () => {
+            this._isStarted = true;
+            this._isConnected = false;
+
+            this.runtime.startHats('koshien_connectGame');
+        });
+        this.runtime.on('PROJECT_STOP_ALL', () => {
+            this._isConnected = false;
+            this._isStarted = false;
+        });
     }
 
     /**
@@ -760,11 +757,32 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     connectGame (args) {
-        if (this._client.isConnected()) {
+        if (!this._isStarted) return false;
+        if (this._isConnected) return false;
+
+        const playerName = Cast.toString(args.NAME);
+        if (!playerName) {
+            log.error(`プレイヤー名を付けてください（最大${PLAYER_NAME_LIMIT}文字まで）`);
+            return false;
+        }
+        if (playerName.length > PLAYER_NAME_LIMIT) {
+            log.error(`プレイヤー名が長すぎます（最大${PLAYER_NAME_LIMIT}文字までで命名してください）: ${playerName}`);
             return false;
         }
 
-        this._client.connect(args.NAME);
+        this._koshienClient.playerName = playerName;
+        this._koshienClient.playerId = uuidv4();
+        this._koshienClient.playerSide = 1;
+
+        this._connectionStatus = ConnectionStatus.CONNECTING;
+        this._koshienClient.connectGame()
+            .then((result) => {
+                this._isConnected = true;
+                this.updatePlayerInfo(result);
+            })
+            .catch((err) => {
+                log.error(err);
+            });
         return true;
     }
 
@@ -775,7 +793,8 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     getMapArea (args) {
-        // wip
+        if (this._connectionStatus === ConnectionStatus.INITIAL) return;
+        if (this._connectionStatus === ConnectionStatus.CONNECTING) return;
     }
 
     /**
@@ -797,7 +816,7 @@ class KoshienBlocks {
      * @return {Promise} - promise
      */
     moveTo (args) {
-        return this._client.moveTo(args.POSITION);
+        return new Promise(resolve => resolve());
     }
 
     /**
@@ -808,7 +827,7 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     calcGoalRoute (args) {
-        return this._client.calcRoute({result: args.RESULT});
+        // return this._client.calcRoute({result: args.RESULT});
     }
 
     /**
@@ -822,9 +841,9 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     calcRoute (args) {
-        return this._client.calcRoute(
-            {src: args.SRC, dst: args.DST, exceptCells: args.EXCEPT_CELLS, result: args.RESULT}
-        );
+        // return this._client.calcRoute(
+        //    {src: args.SRC, dst: args.DST, exceptCells: args.EXCEPT_CELLS, result: args.RESULT}
+        // );
     }
 
     /**
@@ -847,15 +866,16 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     mapFrom (args) {
-        // wip
-        return -1;
+        const map = new Map(Cast.toString(args.MAP));
+        const position = new Position(Cast.toString(args.POSITION));
+        return map.data(position);
     }
 
     /**
      * all map information
      */
     mapAll () {
-        // wip
+        return this._myMap.toString();
     }
 
     /**
@@ -879,7 +899,39 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     targetCoordinate (args) {
-        // wip
+        const target = Cast.toString(args.TARGET);
+        const coordinate = Cast.toString(args.COORDINATE);
+
+        let targetPosition;
+        switch (target) {
+        case KoshienTargetName.ENEMY:
+            targetPosition = this._enemyPos;
+            break;
+        case KoshienTargetName.GOAL:
+            targetPosition = this._goal;
+            break;
+        case KoshienTargetName.PLAYER:
+            targetPosition = new Position(this._x, this._y);
+            break;
+        case KoshienTargetName.OTHER:
+            targetPosition = this._otherPlayerPos;
+            break;
+        default:
+            log.error(`invalid target: ${args.TARGET}`);
+            return null;
+        }
+
+        switch (coordinate) {
+        case KoshienCoordinateName.POSITION:
+            return targetPosition;
+        case KoshienCoordinateName.X:
+            return targetPosition.x;
+        case KoshienCoordinateName.Y:
+            return targetPosition.y;
+        default:
+            log.error(`invalid coordinate: ${args.COORDINATE}`);
+            return null;
+        }
     }
 
     /**
@@ -956,6 +1008,29 @@ class KoshienBlocks {
             return 'D';
         default:
             return -1;
+        }
+    }
+
+    updatePlayerInfo (info) {
+        if (!info) return;
+
+        if (Object.hasOwn(info, 'goal')) {
+            this._goal = new Position(info.goal);
+        }
+        if (Object.hasOwn(info, 'map')) {
+            this._myMap = new Map(info.map);
+        }
+        if (Object.hasOwn(info, 'x')) {
+            this._x = info.x;
+        }
+        if (Object.hasOwn(info, 'y')) {
+            this._y = info.y;
+        }
+        if (Object.hasOwn(info, 'other_player')) {
+            this._otherPlayerPos = new Position(info.other_player);
+        }
+        if (Object.hasOwn(info, 'enemy')) {
+            this._enemyPos = new Position(info.enemy);
         }
     }
 }
