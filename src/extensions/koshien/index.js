@@ -4,13 +4,15 @@ import TargetType from '../../extension-support/target-type';
 import Variable from '../../engine/variable';
 import Cast from '../../util/cast';
 
-import blockIcon from './block-icon.png';
-import translations from './translations.json';
 import KoshienClient from './koshien-client';
 import Position from './position';
 import Map from './map';
 import {v4 as uuidv4} from 'uuid';
 import log from '../../util/log';
+import ConditionVariable from './condition-variable';
+
+import blockIcon from './block-icon.png';
+import translations from './translations.json';
 
 let formatMessage = messageData => messageData.defaultMessage;
 
@@ -372,6 +374,8 @@ class KoshienBlocks {
 
         this._isStarted = false;
         this._isConnected = false;
+        this._connecting = new ConditionVariable();
+        this._connecting.cancel('not started');
 
         this._playerName = 'player1';
         this._host = '127.0.0.1:3000';
@@ -774,14 +778,18 @@ class KoshienBlocks {
         this._koshienClient.playerId = uuidv4();
         this._koshienClient.playerSide = 1;
 
+        this._connecting = new ConditionVariable();
+
         this._connectionStatus = ConnectionStatus.CONNECTING;
         this._koshienClient.connectGame()
             .then((result) => {
-                this._isConnected = true;
                 this.updatePlayerInfo(result);
+                this._isConnected = true;
+                this._connecting.complete(true);
             })
             .catch((err) => {
                 log.error(err);
+                this._connecting.cancel(err);
             });
         return true;
     }
@@ -789,12 +797,25 @@ class KoshienBlocks {
     /**
      * get map information around position
      * @param {object} args - the block's arguments.
-     * @param {number} args.POSITION - position
+     * @param {string} args.POSITION - position
      */
     // eslint-disable-next-line no-unused-vars
     getMapArea (args) {
-        if (this._connectionStatus === ConnectionStatus.INITIAL) return;
-        if (this._connectionStatus === ConnectionStatus.CONNECTING) return;
+        if (!this._isConnected) {
+            // done の return で Promise を返さないといけないような気がする。
+            return this._connecting.wait({ done: (success, error) => {
+                if (error) {
+                    log.error(error);
+                }
+                if (success) {
+                    return this.getMapArea(args);
+                }
+                return Promise.resolve();
+            }});
+        }
+
+        const position = new Position(Cast.toString(args.POSITION));
+        return this._koshienClient.getMapArea({ x: position.x, y: position.y });
     }
 
     /**
