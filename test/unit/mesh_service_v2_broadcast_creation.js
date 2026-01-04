@@ -28,6 +28,15 @@ const createMockStage = () => ({
         }
         return null;
     },
+    lookupBroadcastByInputValue: function (name) {
+        for (const varId in this.variables) {
+            const v = this.variables[varId];
+            if (v.type === Variable.BROADCAST_MESSAGE_TYPE && v.name.toLowerCase() === name.toLowerCase()) {
+                return v;
+            }
+        }
+        return null;
+    },
     createVariable: function (id, name, type) {
         const varId = id || `id-${name}`;
         this.variables[varId] = new Variable(varId, name, type);
@@ -61,7 +70,7 @@ test('MeshV2Service Broadcast Creation', t => {
         service.broadcastEvent(event);
 
         // Check if message was created
-        const broadcastVar = stage.lookupBroadcastMsg(null, 'new message');
+        const broadcastVar = stage.lookupBroadcastByInputValue('new message');
         st.ok(broadcastVar, 'Broadcast message should be created');
         st.equal(broadcastVar.name, 'new message');
         st.equal(broadcastVar.type, Variable.BROADCAST_MESSAGE_TYPE);
@@ -75,9 +84,9 @@ test('MeshV2Service Broadcast Creation', t => {
         st.end();
     });
 
-    t.test('broadcastEvent uses existing broadcast message', st => {
+    t.test('broadcastEvent uses existing broadcast message (case-insensitive)', st => {
         const stage = createMockStage();
-        const existingVar = new Variable('existing-id', 'existing message', Variable.BROADCAST_MESSAGE_TYPE);
+        const existingVar = new Variable('existing-id', 'Existing Message', Variable.BROADCAST_MESSAGE_TYPE);
         stage.variables['existing-id'] = existingVar;
 
         const blocks = createMockBlocks(stage);
@@ -96,10 +105,11 @@ test('MeshV2Service Broadcast Creation', t => {
 
         service.broadcastEvent(event);
 
-        // Check if opcode was called with the existing ID
+        // Check if opcode was called with the existing ID and canonical name
         st.ok(broadcastArgs, 'event_broadcast should be called');
-        st.equal(broadcastArgs.BROADCAST_OPTION.name, 'existing message');
-        st.equal(broadcastArgs.BROADCAST_OPTION.id, 'existing-id');
+        st.equal(broadcastArgs.BROADCAST_OPTION.id, 'existing-id', 'Should use existing variable ID');
+        st.equal(broadcastArgs.BROADCAST_OPTION.name, 'Existing Message', 'Should use canonical name');
+        st.equal(Object.keys(stage.variables).length, 1, 'Should not create duplicate variable');
 
         st.end();
     });

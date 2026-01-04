@@ -15,6 +15,7 @@ const createMockBlocks = broadcastCallback => ({
         off: () => {},
         getTargetForStage: () => ({
             lookupBroadcastMsg: (id, name) => ({id: `id-${name}`, name: name}),
+            lookupBroadcastByInputValue: name => ({id: `id-${name}`, name: name}),
             createVariable: () => {}
         }),
         requestBlocksUpdate: () => {}
