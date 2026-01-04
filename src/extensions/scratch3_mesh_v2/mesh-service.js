@@ -621,6 +621,9 @@ class MeshV2Service {
                 log.info(`Mesh V2: Creating missing broadcast message: ${event.name}`);
                 stage.createVariable(null, event.name, Variable.BROADCAST_MESSAGE_TYPE);
                 broadcastVar = stage.lookupBroadcastMsg(null, event.name);
+                if (broadcastVar) {
+                    broadcastVar.isPersistent = true;
+                }
                 this.runtime.requestBlocksUpdate();
             }
 

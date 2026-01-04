@@ -65,6 +65,7 @@ test('MeshV2Service Broadcast Creation', t => {
         st.ok(broadcastVar, 'Broadcast message should be created');
         st.equal(broadcastVar.name, 'new message');
         st.equal(broadcastVar.type, Variable.BROADCAST_MESSAGE_TYPE);
+        st.equal(broadcastVar.isPersistent, true, 'Broadcast message should be persistent');
 
         // Check if opcode was called with the new ID
         st.ok(broadcastArgs, 'event_broadcast should be called');
