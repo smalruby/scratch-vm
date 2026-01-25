@@ -858,6 +858,12 @@ class MbitMore {
                     this.soundLevel = dataView.getUint8(6);
                     this.resetConnectionTimeout();
                     resolve(this);
+                })
+                .catch(err => {
+                    window.clearTimeout(this.bleBusyTimeoutID);
+                    this.bleBusy = false;
+                    log.error(err);
+                    resolve(this);
                 });
         });
     }
@@ -998,6 +1004,12 @@ class MbitMore {
                     this.magneticForce.y = dataView.getInt16(14, true);
                     this.magneticForce.z = dataView.getInt16(16, true);
                     this.resetConnectionTimeout();
+                    resolve(this);
+                })
+                .catch(err => {
+                    window.clearTimeout(this.bleBusyTimeoutID);
+                    this.bleBusy = false;
+                    log.error(err);
                     resolve(this);
                 });
         });
