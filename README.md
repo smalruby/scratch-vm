@@ -1,4 +1,13 @@
 ## scratch-vm
+
+> **⚠️ このリポジトリは非推奨です (This repository is obsolete)**
+>
+> このリポジトリは [smalruby/smalruby3-editor](https://github.com/smalruby/smalruby3-editor) に統合されました。
+> 今後の開発・利用はそちらの `packages/scratch-vm` をご参照ください。
+>
+> This repository has been superseded by [smalruby/smalruby3-editor](https://github.com/smalruby/smalruby3-editor).
+> Please refer to `packages/scratch-vm` in that repository for all future development and usage.
+
 #### Scratch VM is a library for representing, running, and maintaining the state of computer programs written using [Scratch Blocks](https://github.com/scratchfoundation/scratch-blocks).
 
 [![CI/CD](https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml)
