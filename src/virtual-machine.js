@@ -1400,6 +1400,9 @@ class VirtualMachine extends EventEmitter {
         // Anything left in messageIds is not referenced by a block, so delete it.
         for (let i = 0; i < messageIds.length; i++) {
             const id = messageIds[i];
+            if (this.runtime.getTargetForStage().variables[id].isPersistent) {
+                continue;
+            }
             delete this.runtime.getTargetForStage().variables[id];
         }
         const globalVarMap = Object.assign({}, this.runtime.getTargetForStage().variables);

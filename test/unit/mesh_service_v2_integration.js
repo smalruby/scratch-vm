@@ -12,7 +12,13 @@ const createMockBlocks = broadcastCallback => ({
         sequencer: {},
         emit: () => {},
         on: () => {},
-        off: () => {}
+        off: () => {},
+        getTargetForStage: () => ({
+            lookupBroadcastMsg: (id, name) => ({id: `id-${name}`, name: name}),
+            lookupBroadcastByInputValue: name => ({id: `id-${name}`, name: name}),
+            createVariable: () => {}
+        }),
+        requestBlocksUpdate: () => {}
     },
     opcodeFunctions: {
         event_broadcast: args => {

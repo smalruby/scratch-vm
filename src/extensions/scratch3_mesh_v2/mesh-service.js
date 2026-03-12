@@ -792,10 +792,22 @@ class MeshV2Service {
     broadcastEvent (event) {
         log.info(`Mesh V2: Executing broadcastEvent for: ${event.name}`);
         try {
+            const stage = this.runtime.getTargetForStage();
+            let broadcastVar = stage.lookupBroadcastByInputValue(event.name);
+            if (!broadcastVar) {
+                log.info(`Mesh V2: Creating missing broadcast message: ${event.name}`);
+                stage.createVariable(null, event.name, Variable.BROADCAST_MESSAGE_TYPE);
+                broadcastVar = stage.lookupBroadcastByInputValue(event.name);
+                if (broadcastVar) {
+                    broadcastVar.isPersistent = true;
+                }
+                this.runtime.requestBlocksUpdate();
+            }
+
             const args = {
                 BROADCAST_OPTION: {
-                    id: null,
-                    name: event.name
+                    id: broadcastVar ? broadcastVar.id : null,
+                    name: broadcastVar ? broadcastVar.name : event.name
                 }
             };
             const util = BlockUtility.lastInstance();
